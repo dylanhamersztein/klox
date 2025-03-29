@@ -41,12 +41,12 @@ class Scanner(private val source: String) {
             '>' -> addToken(if (match('=')) GREATER_EQUAL else GREATER)
             '<' -> addToken(if (match('=')) LESS_EQUAL else LESS)
             '"' -> string()
-            
+
             '/' -> {
                 if (match('/')) {
-                    while (peek() != '\n' && !isAtEnd()) {
-                        advance()
-                    }
+                    singleLineComment()
+                } else if (match('*')) {
+                    multiLineComment()
                 } else {
                     addToken(SLASH)
                 }
@@ -72,45 +72,6 @@ class Scanner(private val source: String) {
         }
     }
 
-    private fun identifier() {
-        while (isAlphaNumeric(peek())) {
-            advance()
-        }
-
-        val text = source.substring(start, current)
-        val tokenType = keyWords[text] ?: IDENTIFIER
-
-        addToken(tokenType)
-    }
-
-    private fun isAlphaNumeric(c: Char) = isAlpha(c) || isDigit(c)
-
-    private fun isAlpha(c: Char) = c in 'a'..'z' || c in 'A'..'Z' || c == '_'
-
-    private fun isDigit(char: Char) = char in '0'..'9'
-
-    private fun number() {
-        while (isDigit(peek())) {
-            advance()
-        }
-
-        if (peek() == '.' && isDigit(peekNext())) {
-            advance()
-
-            while (isDigit(peek())) {
-                advance()
-            }
-        }
-
-        addToken(NUMBER, source.substring(start, current).toDouble())
-    }
-
-    private fun peekNext() = if (current + 1 >= source.length) {
-        '\u0000'
-    } else {
-        source[current + 1]
-    }
-
     private fun string() {
         while (peek() != '"' && !isAtEnd()) {
             if (peek() == '\n') {
@@ -129,6 +90,63 @@ class Scanner(private val source: String) {
 
         val value = source.substring(start + 1, current - 1)
         addToken(STRING, value)
+    }
+
+    private fun identifier() {
+        while (isAlphaNumeric(peek())) {
+            advance()
+        }
+
+        val text = source.substring(start, current)
+        val tokenType = keyWords[text] ?: IDENTIFIER
+
+        addToken(tokenType)
+    }
+
+    private fun number() {
+        while (isDigit(peek())) {
+            advance()
+        }
+
+        if (peek() == '.' && isDigit(peekNext())) {
+            advance()
+
+            while (isDigit(peek())) {
+                advance()
+            }
+        }
+
+        addToken(NUMBER, source.substring(start, current).toDouble())
+    }
+
+    private fun singleLineComment() {
+        while (peek() != '\n' && !isAtEnd()) {
+            advance()
+        }
+    }
+
+    private fun multiLineComment() {
+        while (!match('*') && peekNext() != '/') {
+            if (peek() == '\n') {
+                line++
+            }
+
+            advance()
+        }
+        // need to advance past the final /
+        advance()
+    }
+
+    private fun isAlphaNumeric(c: Char) = isAlpha(c) || isDigit(c)
+
+    private fun isAlpha(c: Char) = c in 'a'..'z' || c in 'A'..'Z' || c == '_'
+
+    private fun isDigit(char: Char) = char in '0'..'9'
+
+    private fun peekNext() = if (current + 1 >= source.length) {
+        '\u0000'
+    } else {
+        source[current + 1]
     }
 
     private fun peek() = if (isAtEnd()) {

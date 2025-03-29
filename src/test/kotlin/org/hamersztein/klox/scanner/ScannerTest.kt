@@ -29,7 +29,7 @@ class ScannerTest {
 
         assertEquals(2, tokens.size)
 
-        val expectedToken = Token(expectedTokenType, input, null, 1)
+        val expectedToken = Token(type = expectedTokenType, lexeme = input, literal = null, line = 1)
         assertEquals(expectedToken, tokens[0])
 
         assertEquals(EOF, tokens[1].type)
@@ -43,7 +43,7 @@ class ScannerTest {
 
         assertEquals(2, tokens.size)
 
-        val expectedToken = Token(expectedTokenType, input, null, 1)
+        val expectedToken = Token(type = expectedTokenType, lexeme = input, literal = null, line = 1)
         assertEquals(expectedToken, tokens[0])
 
         assertEquals(EOF, tokens[1].type)
@@ -56,7 +56,7 @@ class ScannerTest {
 
         assertEquals(2, tokens.size)
 
-        val expectedToken = Token(IDENTIFIER, "something", null, 1)
+        val expectedToken = Token(type = IDENTIFIER, lexeme = "something", literal = null, line = 1)
         assertEquals(expectedToken, tokens[0])
 
         assertEquals(EOF, tokens[1].type)
@@ -69,7 +69,13 @@ class ScannerTest {
 
         assertEquals(2, tokens.size)
 
-        val expectedToken = Token(STRING, "\"some string value\"", "some string value", 1)
+        val expectedToken = Token(
+            type = STRING,
+            lexeme = "\"some string value\"",
+            literal = "some string value",
+            line = 1
+        )
+        
         assertEquals(expectedToken, tokens[0])
 
         assertEquals(EOF, tokens[1].type)
@@ -83,7 +89,7 @@ class ScannerTest {
 
         assertEquals(2, tokens.size)
 
-        val expectedToken = Token(NUMBER, input, input.toDouble(), 1)
+        val expectedToken = Token(type = NUMBER, lexeme = input, literal = input.toDouble(), line = 1)
         assertEquals(expectedToken, tokens[0])
 
         assertEquals(EOF, tokens[1].type)
@@ -111,6 +117,26 @@ class ScannerTest {
         assertEquals(2, tokens.size)
 
         assertEquals(2, tokens[0].line)
+
+        assertEquals(EOF, tokens[1].type)
+    }
+
+    @Test
+    fun `should handle multiline comments`() {
+        val program = """
+            /*
+            this is some multiline comment
+            */
+            1
+        """.trimIndent()
+
+        val scanner = Scanner(program)
+        val tokens = scanner.scanTokens()
+
+        assertEquals(2, tokens.size)
+
+        val expectedToken = Token(type = NUMBER, lexeme = "1", literal = 1.0, line = 4)
+        assertEquals(expectedToken, tokens[0])
 
         assertEquals(EOF, tokens[1].type)
     }
