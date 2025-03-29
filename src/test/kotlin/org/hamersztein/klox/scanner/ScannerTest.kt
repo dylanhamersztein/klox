@@ -13,6 +13,11 @@ import org.junit.jupiter.params.provider.ValueSource
 class ScannerTest {
 
     @Test
+    fun `test test`() {
+        assertEquals(1, 1)
+    }
+
+    @Test
     fun `should return EOF token when program is empty`() {
         val scanner = Scanner("")
         val tokens = scanner.scanTokens()
