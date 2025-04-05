@@ -1,6 +1,10 @@
 package org.hamersztein.klox
 
+import org.hamersztein.klox.ast.AstPrinter
+import org.hamersztein.klox.parser.Parser
 import org.hamersztein.klox.scanner.Scanner
+import org.hamersztein.klox.token.Token
+import org.hamersztein.klox.token.TokenType
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.nio.charset.Charset
@@ -39,11 +43,25 @@ class Lox {
             report(line, "", message)
         }
 
+        fun error(token: Token, message: String) {
+            if (token.type == TokenType.EOF) {
+                report(token.line, "at end", message)
+            } else {
+                report(token.line, " at '${token.lexeme}'", message)
+            }
+        }
+
         private fun run(program: String) {
             val scanner = Scanner(program)
-            val tokens = scanner.scanTokens()
+            val parser = Parser(scanner.scanTokens())
 
-            tokens.forEach { println(it) }
+            val expression = parser.parse()
+
+            if (hadError) {
+                return
+            }
+
+            println(AstPrinter().print(expression!!))
         }
 
         private fun report(line: Int, where: String, message: String) {
