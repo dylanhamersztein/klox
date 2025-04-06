@@ -16,4 +16,5 @@ interface Visitor<R> {
     fun visitThisExpr(expr: This): R
     fun visitUnaryExpr(expr: Unary): R
     fun visitVariableExpr(expr: Variable): R
+    fun visitTernaryExpression(expr: Ternary): R
 }
