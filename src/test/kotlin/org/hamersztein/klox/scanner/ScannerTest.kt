@@ -14,94 +14,87 @@ class ScannerTest {
 
     @Test
     fun `should return EOF token when program is empty`() {
-        val scanner = Scanner("")
-        val tokens = scanner.scanTokens()
-
-        assertEquals(1, tokens.size)
-        assertEquals(EOF, tokens[0].type)
+        assertProgram("") {
+            assertEquals(1, it.size)
+            assertEquals(EOF, it[0].type)
+        }
     }
 
     @MethodSource("provideStringToTokenArgs")
     @ParameterizedTest(name = "should convert {0} character into {1} token with null literal")
-    fun `should convert string with character into expected token type`(input: String, expectedTokenType: TokenType) {
-        val scanner = Scanner(input)
-        val tokens = scanner.scanTokens()
+    fun `should convert string with character into expected token type`(program: String, expectedTokenType: TokenType) {
+        assertProgram(program) {
+            assertEquals(2, it.size)
 
-        assertEquals(2, tokens.size)
+            val expectedToken = Token(type = expectedTokenType, lexeme = program, literal = null, line = 1)
+            assertEquals(expectedToken, it[0])
 
-        val expectedToken = Token(type = expectedTokenType, lexeme = input, literal = null, line = 1)
-        assertEquals(expectedToken, tokens[0])
-
-        assertEquals(EOF, tokens[1].type)
+            assertEquals(EOF, it[1].type)
+        }
     }
 
     @ParameterizedTest
     @MethodSource("provideKeyWordsArgs")
     fun `should add a token for keywords`(input: String, expectedTokenType: TokenType) {
-        val scanner = Scanner(input)
-        val tokens = scanner.scanTokens()
+        assertProgram(input) {
+            assertEquals(2, it.size)
 
-        assertEquals(2, tokens.size)
+            val expectedToken = Token(type = expectedTokenType, lexeme = input, literal = null, line = 1)
+            assertEquals(expectedToken, it[0])
 
-        val expectedToken = Token(type = expectedTokenType, lexeme = input, literal = null, line = 1)
-        assertEquals(expectedToken, tokens[0])
-
-        assertEquals(EOF, tokens[1].type)
+            assertEquals(EOF, it[1].type)
+        }
     }
 
     @Test
     fun `should add a token for an identifier when word is not a keyword`() {
-        val scanner = Scanner("something")
-        val tokens = scanner.scanTokens()
+        assertProgram("something") {
+            assertEquals(2, it.size)
 
-        assertEquals(2, tokens.size)
+            val expectedToken = Token(type = IDENTIFIER, lexeme = "something", literal = null, line = 1)
+            assertEquals(expectedToken, it[0])
 
-        val expectedToken = Token(type = IDENTIFIER, lexeme = "something", literal = null, line = 1)
-        assertEquals(expectedToken, tokens[0])
-
-        assertEquals(EOF, tokens[1].type)
+            assertEquals(EOF, it[1].type)
+        }
     }
 
     @Test
     fun `should add string token for a string value`() {
-        val scanner = Scanner("\"some string value\"")
-        val tokens = scanner.scanTokens()
+        assertProgram("\"some string value\"") {
+            assertEquals(2, it.size)
 
-        assertEquals(2, tokens.size)
+            val expectedToken = Token(
+                type = STRING,
+                lexeme = "\"some string value\"",
+                literal = "some string value",
+                line = 1
+            )
 
-        val expectedToken = Token(
-            type = STRING,
-            lexeme = "\"some string value\"",
-            literal = "some string value",
-            line = 1
-        )
-        
-        assertEquals(expectedToken, tokens[0])
+            assertEquals(expectedToken, it[0])
 
-        assertEquals(EOF, tokens[1].type)
+            assertEquals(EOF, it[1].type)
+        }
     }
 
     @ValueSource(strings = ["1", "1.1"])
     @ParameterizedTest(name = "should add number token and convert value to double when input is {0}")
     fun `should add number token for numerical values`(input: String) {
-        val scanner = Scanner(input)
-        val tokens = scanner.scanTokens()
+        assertProgram(input) {
+            assertEquals(2, it.size)
 
-        assertEquals(2, tokens.size)
+            val expectedToken = Token(type = NUMBER, lexeme = input, literal = input.toDouble(), line = 1)
+            assertEquals(expectedToken, it[0])
 
-        val expectedToken = Token(type = NUMBER, lexeme = input, literal = input.toDouble(), line = 1)
-        assertEquals(expectedToken, tokens[0])
-
-        assertEquals(EOF, tokens[1].type)
+            assertEquals(EOF, it[1].type)
+        }
     }
 
     @Test
     fun `should not add a token for a comment`() {
-        val scanner = Scanner("// some comment")
-        val tokens = scanner.scanTokens()
-
-        assertEquals(1, tokens.size)
-        assertEquals(EOF, tokens[0].type)
+        assertProgram("// some comment") {
+            assertEquals(1, it.size)
+            assertEquals(EOF, it[0].type)
+        }
     }
 
     @Test
@@ -111,14 +104,13 @@ class ScannerTest {
             1
         """.trimIndent()
 
-        val scanner = Scanner(program)
-        val tokens = scanner.scanTokens()
+        assertProgram(program) {
+            assertEquals(2, it.size)
 
-        assertEquals(2, tokens.size)
+            assertEquals(2, it[0].line)
 
-        assertEquals(2, tokens[0].line)
-
-        assertEquals(EOF, tokens[1].type)
+            assertEquals(EOF, it[1].type)
+        }
     }
 
     @Test
@@ -130,16 +122,18 @@ class ScannerTest {
             1
         """.trimIndent()
 
-        val scanner = Scanner(program)
-        val tokens = scanner.scanTokens()
+        assertProgram(program) {
+            assertEquals(2, it.size)
 
-        assertEquals(2, tokens.size)
+            val expectedToken = Token(type = NUMBER, lexeme = "1", literal = 1.0, line = 4)
+            assertEquals(expectedToken, it[0])
 
-        val expectedToken = Token(type = NUMBER, lexeme = "1", literal = 1.0, line = 4)
-        assertEquals(expectedToken, tokens[0])
-
-        assertEquals(EOF, tokens[1].type)
+            assertEquals(EOF, it[1].type)
+        }
     }
+
+    private fun assertProgram(program: String, assertFunction: (List<Token>) -> Unit) =
+        assertFunction(Scanner(program).scanTokens())
 
     companion object {
         @JvmStatic
@@ -164,6 +158,8 @@ class ScannerTest {
             Arguments.of("<=", LESS_EQUAL),
             Arguments.of("<=", LESS_EQUAL),
             Arguments.of("/", SLASH),
+            Arguments.of("?", QUESTION_MARK),
+            Arguments.of(":", COLON),
         )
 
         @JvmStatic
