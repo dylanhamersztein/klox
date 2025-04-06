@@ -2,10 +2,7 @@ package org.hamersztein.klox.parser
 
 import org.hamersztein.klox.Lox
 import org.hamersztein.klox.ast.expression.Expression
-import org.hamersztein.klox.ast.expression.impl.Binary
-import org.hamersztein.klox.ast.expression.impl.Grouping
-import org.hamersztein.klox.ast.expression.impl.Literal
-import org.hamersztein.klox.ast.expression.impl.Unary
+import org.hamersztein.klox.ast.expression.impl.*
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType
 import org.hamersztein.klox.token.TokenType.*
@@ -19,7 +16,21 @@ class Parser(private val tokens: List<Token>) {
         null
     }
 
-    private fun expression() = equality()
+    private fun expression() = ternary()
+
+    private fun ternary(): Expression {
+        var expression = equality()
+
+        if (match(QUESTION_MARK)) {
+            val left = expression()
+            consume(COLON, "Expect : after ternary expression.")
+            val right = expression()
+
+            expression = Ternary(expression, left, right)
+        }
+
+        return expression
+    }
 
     private fun equality() = parseBinaryOperators(::comparison, BANG_EQUAL, EQUAL_EQUAL)
 

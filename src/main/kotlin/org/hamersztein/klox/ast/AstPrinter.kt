@@ -15,6 +15,8 @@ class AstPrinter : Visitor<String> {
 
     override fun visitUnaryExpr(expr: Unary) = parenthesize(expr.operator.lexeme, expr.right)
 
+    override fun visitTernaryExpression(expr: Ternary) = parenthesize(print(expr.condition), expr.left, expr.right)
+
     override fun visitAssignExpr(expr: Assign): String {
         TODO("Not yet implemented")
     }
