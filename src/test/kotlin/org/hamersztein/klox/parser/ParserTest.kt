@@ -300,6 +300,14 @@ class ParserTest {
                     Token(TRUE, "true", true, 1),
                     Token(EOF, "", null, 1),
                 )
+            ),
+            Arguments.of(
+                listOf(
+                    Token(TRUE, "true", true, 1),
+                    Token(QUESTION_MARK, "?", null, 1),
+                    Token(NUMBER, "3", 3.0, 1),
+                    Token(EOF, "", null, 1),
+                )
             )
         )
     }
