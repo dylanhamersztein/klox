@@ -127,6 +127,10 @@ class InterpreterTest {
             Arguments.of(STAR, 2.0, 2.0, 4.0),
             Arguments.of(PLUS, 2.0, 2.0, 4.0),
             Arguments.of(PLUS, "hello", "world", "helloworld"),
+            Arguments.of(PLUS, "hello", 2.0, "hello2.0"),
+            Arguments.of(PLUS, 2.0, "hello", "2.0hello"),
+            Arguments.of(PLUS, true, "hello", "truehello"),
+            Arguments.of(PLUS, "hello", true, "hellotrue"),
             Arguments.of(GREATER, 1.0, 2.0, false),
             Arguments.of(GREATER_EQUAL, 1.0, 2.0, false),
             Arguments.of(LESS, 1.0, 2.0, true),
@@ -153,8 +157,8 @@ class InterpreterTest {
             Arguments.of(STAR, 1, "hello", "Operand must be a number."),
             Arguments.of(SLASH, "hello", 1, "Operand must be a number."),
             Arguments.of(SLASH, 1, "hello", "Operand must be a number."),
-            Arguments.of(PLUS, "hello", 1, "Operands must be two numbers or two strings"),
-            Arguments.of(PLUS, 1, "hello", "Operands must be two numbers or two strings"),
+            Arguments.of(PLUS, false, true, "Could not add false to true."),
+            Arguments.of(PLUS, 1, true, "Could not add 1 to true.")
         )
     }
 

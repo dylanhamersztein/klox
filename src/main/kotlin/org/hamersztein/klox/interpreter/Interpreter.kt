@@ -59,8 +59,8 @@ class Interpreter : Visitor<Any?> {
 
             PLUS -> when {
                 left is Double && right is Double -> left + right
-                left is String && right is String -> left + right
-                else -> throw RuntimeError(expr.operator, "Operands must be two numbers or two strings")
+                left is String || right is String -> left.toString() + right
+                else -> throw RuntimeError(expr.operator, "Could not add $left to $right.")
             }
 
             GREATER -> {
