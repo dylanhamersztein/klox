@@ -2,18 +2,22 @@ package org.hamersztein.klox.interpreter
 
 import org.hamersztein.klox.Lox
 import org.hamersztein.klox.ast.expression.Expression
-import org.hamersztein.klox.ast.expression.Visitor
 import org.hamersztein.klox.ast.expression.impl.*
 import org.hamersztein.klox.ast.expression.impl.Set
+import org.hamersztein.klox.ast.statement.Statement
+import org.hamersztein.klox.ast.statement.impl.*
+import org.hamersztein.klox.ast.statement.impl.Function
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType.*
+import org.hamersztein.klox.ast.expression.Visitor as ExpressionVisitor
+import org.hamersztein.klox.ast.statement.Visitor as StatementVisitor
+import org.hamersztein.klox.ast.statement.impl.Expression as ExpressionStatement
 
-class Interpreter : Visitor<Any?> {
+class Interpreter : ExpressionVisitor<Any?>, StatementVisitor<Unit> {
 
-    fun interpret(expression: Expression) {
+    fun interpret(statements: List<Statement>) {
         try {
-            val value = evaluate(expression)
-            println(stringify(value))
+            statements.forEach(::execute)
         } catch (e: RuntimeError) {
             Lox.runtimeError(e)
         }
@@ -141,6 +145,45 @@ class Interpreter : Visitor<Any?> {
     override fun visitTernaryExpression(expr: Ternary): Any? {
         TODO("Not yet implemented")
     }
+
+    override fun visitExpressionStatement(statement: ExpressionStatement) {
+        evaluate(statement.expression)
+    }
+
+    override fun visitPrintStatement(statement: Print) {
+        val value = evaluate(statement.expression)
+        println(stringify(value))
+    }
+
+    override fun visitBlockStatement(statement: Block) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visitClassStatement(statement: Class) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visitFunctionStatement(statement: Function) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visitIfStatement(statement: If) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visitReturnStatement(statement: Return) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visitVarStatement(statement: Var) {
+        TODO("Not yet implemented")
+    }
+
+    override fun visitWhileStatement(statement: While) {
+        TODO("Not yet implemented")
+    }
+
+    private fun execute(statement: Statement) = statement.accept(this)
 
     private fun evaluate(expr: Expression) = expr.accept(this)
 

@@ -4,6 +4,7 @@ import org.hamersztein.klox.ast.expression.impl.Binary
 import org.hamersztein.klox.ast.expression.impl.Grouping
 import org.hamersztein.klox.ast.expression.impl.Literal
 import org.hamersztein.klox.ast.expression.impl.Unary
+import org.hamersztein.klox.ast.statement.impl.Print
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType
 import org.hamersztein.klox.token.TokenType.*
@@ -12,9 +13,28 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 import kotlin.test.assertEquals
 
 class InterpreterTest {
+
+    @Test
+    fun `should interpret a print statement correctly`() {
+        val originalSystemOut = System.out
+        val outputStreamCaptor = ByteArrayOutputStream()
+        System.setOut(PrintStream(outputStreamCaptor))
+
+        val literalValue = "hello, world!"
+        val statements = listOf(Print(Literal(literalValue)))
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals(literalValue, outputStreamCaptor.toString().trim())
+
+        System.setOut(originalSystemOut)
+    }
 
     @Test
     fun `should interpret grouping expression correctly`() {

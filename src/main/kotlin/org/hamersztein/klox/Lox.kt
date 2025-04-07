@@ -51,13 +51,13 @@ class Lox {
             val scanner = Scanner(program)
             val parser = Parser(scanner.scanTokens())
 
-            val expression = parser.parse()
+            val statements = parser.parse()
 
             if (hadError) {
                 return
             }
 
-            interpreter.interpret(expression!!)
+            interpreter.interpret(statements)
         }
 
         fun error(line: Int, message: String) {
