@@ -151,12 +151,13 @@ class InterpreterTest {
 
         @JvmStatic
         private fun provideArgumentsForBinaryWithBadOperandsTest() = listOf(
-            Arguments.of(MINUS, "hello", 1, "Operand must be a number."),
-            Arguments.of(MINUS, 1, "hello", "Operand must be a number."),
-            Arguments.of(STAR, "hello", 1, "Operand must be a number."),
-            Arguments.of(STAR, 1, "hello", "Operand must be a number."),
-            Arguments.of(SLASH, "hello", 1, "Operand must be a number."),
-            Arguments.of(SLASH, 1, "hello", "Operand must be a number."),
+            Arguments.of(MINUS, "hello", 1.0, "Operand must be a number."),
+            Arguments.of(MINUS, 1.0, "hello", "Operand must be a number."),
+            Arguments.of(STAR, "hello", 1.0, "Operand must be a number."),
+            Arguments.of(STAR, 1.0, "hello", "Operand must be a number."),
+            Arguments.of(SLASH, "hello", 1.0, "Operand must be a number."),
+            Arguments.of(SLASH, 1.0, "hello", "Operand must be a number."),
+            Arguments.of(SLASH, 1.0, 0.0, "Cannot divide by 0"),
             Arguments.of(PLUS, false, true, "Could not add false to true."),
             Arguments.of(PLUS, 1, true, "Could not add 1 to true.")
         )

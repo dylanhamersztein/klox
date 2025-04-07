@@ -49,6 +49,7 @@ class Interpreter : Visitor<Any?> {
 
             SLASH -> {
                 checkNumberOperands(expr.operator, left, right)
+                checkRightIsNotZero(expr.operator, right)
                 (left as Double) / (right as Double)
             }
 
@@ -149,6 +150,12 @@ class Interpreter : Visitor<Any?> {
     private fun checkNumberOperand(operator: Token, operand: Any?) {
         if (operand !is Double) {
             throw RuntimeError(operator, "Operand must be a number.")
+        }
+    }
+
+    private fun checkRightIsNotZero(token: Token, right: Any?) {
+        if (right is Double && right == 0.0) {
+            throw RuntimeError(token, "Cannot divide by 0")
         }
     }
 
