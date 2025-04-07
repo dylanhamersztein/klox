@@ -127,8 +127,10 @@ class InterpreterTest {
             Arguments.of(STAR, 2.0, 2.0, 4.0),
             Arguments.of(PLUS, 2.0, 2.0, 4.0),
             Arguments.of(PLUS, "hello", "world", "helloworld"),
-            Arguments.of(PLUS, "hello", 2.0, "hello2.0"),
-            Arguments.of(PLUS, 2.0, "hello", "2.0hello"),
+            Arguments.of(PLUS, "hello", 2.1, "hello2.1"),
+            Arguments.of(PLUS, 2.1, "hello", "2.1hello"),
+            Arguments.of(PLUS, "hello", 2.0, "hello2"),
+            Arguments.of(PLUS, 2.0, "hello", "2hello"),
             Arguments.of(PLUS, true, "hello", "truehello"),
             Arguments.of(PLUS, "hello", true, "hellotrue"),
             Arguments.of(GREATER, 1.0, 2.0, false),
@@ -159,7 +161,8 @@ class InterpreterTest {
             Arguments.of(SLASH, 1.0, "hello", "Operand must be a number."),
             Arguments.of(SLASH, 1.0, 0.0, "Cannot divide by 0"),
             Arguments.of(PLUS, false, true, "Could not add false to true."),
-            Arguments.of(PLUS, 1, true, "Could not add 1 to true.")
+            Arguments.of(PLUS, 1.0, true, "Could not add 1 to true."),
+            Arguments.of(PLUS, 1.1, true, "Could not add 1.1 to true.")
         )
     }
 

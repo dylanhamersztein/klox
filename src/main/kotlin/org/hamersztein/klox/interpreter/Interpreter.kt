@@ -60,8 +60,23 @@ class Interpreter : Visitor<Any?> {
 
             PLUS -> when {
                 left is Double && right is Double -> left + right
-                left is String || right is String -> left.toString() + right
-                else -> throw RuntimeError(expr.operator, "Could not add $left to $right.")
+                left is String || right is String -> {
+                    val leftString = left.toString()
+
+                    when {
+                        left is Double && leftString.endsWith(DOUBLE_SUFFIX_IDENTIFIER) -> {
+                            leftString.dropLast(2) + right
+                        }
+
+                        right is Double && right.toString().endsWith(DOUBLE_SUFFIX_IDENTIFIER) -> {
+                            leftString + right.toString().dropLast(2)
+                        }
+
+                        else -> leftString + right
+                    }
+                }
+
+                else -> handleBadPlusOperands(left, right, expr)
             }
 
             GREATER -> {
@@ -165,7 +180,7 @@ class Interpreter : Visitor<Any?> {
         is Double -> {
             var text = value.toString()
 
-            if (text.endsWith(".0")) {
+            if (text.endsWith(DOUBLE_SUFFIX_IDENTIFIER)) {
                 text = text.dropLast(2)
             }
 
@@ -173,5 +188,25 @@ class Interpreter : Visitor<Any?> {
         }
 
         else -> value.toString()
+    }
+
+    private fun handleBadPlusOperands(left: Any?, right: Any?, expr: Binary) {
+        val leftText = if (left is Double && left.toString().endsWith(DOUBLE_SUFFIX_IDENTIFIER)) {
+            left.toString().dropLast(2)
+        } else {
+            left
+        }
+
+        val rightText = if (right is Double && right.toString().endsWith(DOUBLE_SUFFIX_IDENTIFIER)) {
+            right.toString().dropLast(2)
+        } else {
+            right
+        }
+
+        throw RuntimeError(expr.operator, "Could not add $leftText to $rightText.")
+    }
+
+    companion object {
+        private const val DOUBLE_SUFFIX_IDENTIFIER = ".0"
     }
 }
