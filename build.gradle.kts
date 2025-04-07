@@ -16,6 +16,7 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    maxParallelForks = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
 }
 kotlin {
     jvmToolchain(21)
