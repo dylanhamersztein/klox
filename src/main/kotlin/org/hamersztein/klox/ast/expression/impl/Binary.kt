@@ -1,7 +1,7 @@
 package org.hamersztein.klox.ast.expression.impl
 
-import org.hamersztein.klox.ast.Visitor
 import org.hamersztein.klox.ast.expression.Expression
+import org.hamersztein.klox.ast.expression.Visitor
 import org.hamersztein.klox.token.Token
 
 class Binary(val left: Expression, val operator: Token, val right: Expression) : Expression() {
