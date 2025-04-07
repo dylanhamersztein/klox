@@ -1,6 +1,7 @@
 package org.hamersztein.klox
 
-import org.hamersztein.klox.ast.AstPrinter
+import org.hamersztein.klox.interpreter.Interpreter
+import org.hamersztein.klox.interpreter.RuntimeError
 import org.hamersztein.klox.parser.Parser
 import org.hamersztein.klox.scanner.Scanner
 import org.hamersztein.klox.token.Token
@@ -15,6 +16,9 @@ import kotlin.system.exitProcess
 class Lox {
     companion object {
         private var hadError = false
+        private var hadRuntimeError = false
+
+        private val interpreter = Interpreter()
 
         fun runFile(filePath: String) {
             val bytes = Files.readAllBytes(Paths.get(filePath))
@@ -22,6 +26,10 @@ class Lox {
 
             if (hadError) {
                 exitProcess(65)
+            }
+
+            if (hadRuntimeError) {
+                exitProcess(70)
             }
         }
 
@@ -39,6 +47,19 @@ class Lox {
             }
         }
 
+        private fun run(program: String) {
+            val scanner = Scanner(program)
+            val parser = Parser(scanner.scanTokens())
+
+            val expression = parser.parse()
+
+            if (hadError) {
+                return
+            }
+
+            interpreter.interpret(expression!!)
+        }
+
         fun error(line: Int, message: String) {
             report(line, "", message)
         }
@@ -51,17 +72,9 @@ class Lox {
             }
         }
 
-        private fun run(program: String) {
-            val scanner = Scanner(program)
-            val parser = Parser(scanner.scanTokens())
-
-            val expression = parser.parse()
-
-            if (hadError) {
-                return
-            }
-
-            println(AstPrinter().print(expression!!))
+        fun runtimeError(e: RuntimeError) {
+            System.err.println("${e.message}\n[line ${e.token.line}]")
+            hadRuntimeError = true
         }
 
         private fun report(line: Int, where: String, message: String) {

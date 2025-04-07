@@ -8,6 +8,7 @@ import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType
 import org.hamersztein.klox.token.TokenType.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -68,6 +69,43 @@ class InterpreterTest {
         assertEquals(expected, result)
     }
 
+    @Test
+    fun `should throw RuntimeError when interpreting unary minus where operand is not a number`() {
+        val token = Token(MINUS, "", null, 1)
+        val expression = Unary(token, Literal("muffin"))
+
+        val interpreter = Interpreter()
+
+        val exception = assertThrows<RuntimeError> {
+            interpreter.visitUnaryExpr(expression)
+        }
+
+        assertEquals(token, exception.token)
+        assertEquals("Operand must be a number.", exception.message)
+    }
+
+    @ParameterizedTest(name = "should throw runtime error when interpreting binary expression with operator {0}, left {1}, and right {2}")
+    @MethodSource("provideArgumentsForBinaryWithBadOperandsTest")
+    fun `should throw RuntimeError when interpreting binary expressions with bad operands`(
+        tokenType: TokenType,
+        left: Any?,
+        right: Any?,
+        expectedErrorMessage: String
+    ) {
+        val token = Token(tokenType, "", null, 1)
+        val expression = Binary(Literal(left), token, Literal(right))
+
+        val interpreter = Interpreter()
+
+        val exception = assertThrows<RuntimeError> {
+            interpreter.visitBinaryExpr(expression)
+        }
+
+        assertEquals(token, exception.token)
+        assertEquals(expectedErrorMessage, exception.message)
+
+    }
+
     companion object {
         @JvmStatic
         private fun provideArgumentsForLiteralTest() = listOf(
@@ -105,6 +143,18 @@ class InterpreterTest {
             Arguments.of(EQUAL_EQUAL, 2.0, 1.0, false),
             Arguments.of(EQUAL_EQUAL, "hello", "hello", true),
             Arguments.of(EQUAL_EQUAL, "hello", "world", false),
+        )
+
+        @JvmStatic
+        private fun provideArgumentsForBinaryWithBadOperandsTest() = listOf(
+            Arguments.of(MINUS, "hello", 1, "Operand must be a number."),
+            Arguments.of(MINUS, 1, "hello", "Operand must be a number."),
+            Arguments.of(STAR, "hello", 1, "Operand must be a number."),
+            Arguments.of(STAR, 1, "hello", "Operand must be a number."),
+            Arguments.of(SLASH, "hello", 1, "Operand must be a number."),
+            Arguments.of(SLASH, 1, "hello", "Operand must be a number."),
+            Arguments.of(PLUS, "hello", 1, "Operands must be two numbers or two strings"),
+            Arguments.of(PLUS, 1, "hello", "Operands must be two numbers or two strings"),
         )
     }
 
