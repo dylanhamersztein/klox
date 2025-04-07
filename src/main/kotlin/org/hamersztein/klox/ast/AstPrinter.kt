@@ -1,6 +1,7 @@
 package org.hamersztein.klox.ast
 
 import org.hamersztein.klox.ast.expression.Expression
+import org.hamersztein.klox.ast.expression.Visitor
 import org.hamersztein.klox.ast.expression.impl.*
 import org.hamersztein.klox.ast.expression.impl.Set
 

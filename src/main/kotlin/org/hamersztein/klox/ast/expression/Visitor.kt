@@ -1,4 +1,4 @@
-package org.hamersztein.klox.ast
+package org.hamersztein.klox.ast.expression
 
 import org.hamersztein.klox.ast.expression.impl.*
 import org.hamersztein.klox.ast.expression.impl.Set

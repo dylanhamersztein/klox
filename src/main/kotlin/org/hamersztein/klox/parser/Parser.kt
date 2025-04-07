@@ -3,17 +3,40 @@ package org.hamersztein.klox.parser
 import org.hamersztein.klox.Lox
 import org.hamersztein.klox.ast.expression.Expression
 import org.hamersztein.klox.ast.expression.impl.*
+import org.hamersztein.klox.ast.statement.Statement
+import org.hamersztein.klox.ast.statement.impl.Print
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType
 import org.hamersztein.klox.token.TokenType.*
+import org.hamersztein.klox.ast.statement.impl.Expression as ExpressionStatement
 
 class Parser(private val tokens: List<Token>) {
     private var current = 0
 
-    fun parse() = try {
-        expression()
-    } catch (e: ParseError) {
-        null
+    fun parse() = mutableListOf<Statement>().apply {
+        while (!isAtEnd()) {
+            this += statement()
+        }
+    }
+
+    private fun statement() = if (match(PRINT)) {
+        printStatement()
+    } else {
+        expressionStatement()
+    }
+
+    private fun printStatement(): Statement {
+        val value = expression()
+        consume(SEMICOLON, "Expect ';' after value.")
+
+        return Print(value)
+    }
+
+    private fun expressionStatement(): Statement {
+        val value = expression()
+        consume(SEMICOLON, "Expect ';' after expression.")
+
+        return ExpressionStatement(value)
     }
 
     private fun expression() = ternary()
