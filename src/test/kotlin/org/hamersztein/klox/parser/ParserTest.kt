@@ -3,19 +3,56 @@ package org.hamersztein.klox.parser
 import org.hamersztein.klox.ast.expression.Expression
 import org.hamersztein.klox.ast.expression.impl.*
 import org.hamersztein.klox.ast.statement.impl.Print
+import org.hamersztein.klox.ast.statement.impl.Var
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType.*
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.MethodSource
 import kotlin.test.assertEquals
 import org.hamersztein.klox.ast.statement.impl.Expression as ExpressionStatement
 
 class ParserTest {
+
+    @Test
+    fun `should create a variable statement without an initializer`() {
+        val tokens = listOf(
+            Token(VAR, "var", null, 1),
+            Token(IDENTIFIER, "breakfast", null, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(EOF, "", null, 1),
+        )
+
+        val parser = Parser(tokens)
+
+        val statements = parser.parse()
+
+        assertEquals(1, statements.size)
+        assertTrue(statements[0] is Var)
+        assertEquals("breakfast", (statements[0] as Var).name.lexeme)
+        assertNull((statements[0] as Var).initializer)
+    }
+
+    @Test
+    fun `should create a variable statement with a literal initializer`() {
+        val tokens = listOf(
+            Token(VAR, "var", null, 1),
+            Token(IDENTIFIER, "breakfast", null, 1),
+            Token(EQUAL, "=", null, 1),
+            Token(NUMBER, "1", 1.0, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(EOF, "", null, 1),
+        )
+
+        val parser = Parser(tokens)
+
+        val statements = parser.parse()
+
+        assertEquals(1, statements.size)
+        assertTrue(statements[0] is Var)
+        assertEquals("breakfast", (statements[0] as Var).name.lexeme)
+        assertNotNull((statements[0] as Var).initializer)
+        assertTrue((statements[0] as Var).initializer is Literal)
+    }
 
     @Test
     fun `should create binary expression`() {
@@ -319,54 +356,6 @@ class ParserTest {
         assertTrue(expression[0] is ExpressionStatement)
 
         assertFunction((expression[0] as ExpressionStatement).expression)
-    }
-
-    @ParameterizedTest
-    @MethodSource("provideArgsToInvalidExpressionTest")
-    fun `should throw ParseError when tokens do not make an expression or statement`(invalidTokens: List<Token>) {
-        val parser = Parser(invalidTokens)
-
-        assertThrows<ParseError> {
-            parser.parse()
-        }
-    }
-
-    companion object {
-        @JvmStatic
-        fun provideArgsToInvalidExpressionTest() = listOf(
-            Arguments.of(
-                listOf(
-                    Token(LEFT_PAREN, "(", null, 1),
-                    Token(SEMICOLON, ";", null, 1),
-                    Token(EOF, "", null, 1),
-                )
-            ),
-            Arguments.of(
-                listOf(
-                    Token(NUMBER, "1", 1.0, 1),
-                    Token(PLUS, "+", null, 1),
-                    Token(SEMICOLON, ";", null, 1),
-                    Token(EOF, "", null, 1),
-                )
-            ),
-            Arguments.of(
-                listOf(
-                    Token(AND, "and", null, 1),
-                    Token(TRUE, "true", true, 1),
-                    Token(SEMICOLON, ";", null, 1),
-                    Token(EOF, "", null, 1),
-                )
-            ),
-            Arguments.of(
-                listOf(
-                    Token(TRUE, "true", true, 1),
-                    Token(QUESTION_MARK, "?", null, 1),
-                    Token(NUMBER, "3", 3.0, 1),
-                    Token(SEMICOLON, ";", null, 1),
-                    Token(EOF, "", null, 1),
-                )
-            )
-        )
     }
 
 }

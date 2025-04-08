@@ -5,6 +5,7 @@ import org.hamersztein.klox.ast.expression.Expression
 import org.hamersztein.klox.ast.expression.impl.*
 import org.hamersztein.klox.ast.statement.Statement
 import org.hamersztein.klox.ast.statement.impl.Print
+import org.hamersztein.klox.ast.statement.impl.Var
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType
 import org.hamersztein.klox.token.TokenType.*
@@ -13,17 +14,32 @@ import org.hamersztein.klox.ast.statement.impl.Expression as ExpressionStatement
 class Parser(private val tokens: List<Token>) {
     private var current = 0
 
-    fun parse() = mutableListOf<Statement>().apply {
+    fun parse() = mutableListOf<Statement?>().apply {
         while (!isAtEnd()) {
-            this += statement()
+            this += declaration()
         }
     }
 
-    private fun statement() = if (match(PRINT)) {
-        printStatement()
-    } else {
-        expressionStatement()
+    private fun declaration() = try {
+        when {
+            match(VAR) -> variableDeclaration()
+            else -> statement()
+        }
+    } catch (_: ParseError) {
+        synchronize()
+        null
     }
+
+    private fun variableDeclaration(): Statement {
+        val name = consume(IDENTIFIER, "Expect variable name.")
+        val initializer = if (match(EQUAL)) expression() else null
+
+        consume(SEMICOLON, "Expect ';' after variable declaration.")
+
+        return Var(name, initializer)
+    }
+
+    private fun statement() = if (match(PRINT)) printStatement() else expressionStatement()
 
     private fun printStatement(): Statement {
         val value = expression()
@@ -76,6 +92,7 @@ class Parser(private val tokens: List<Token>) {
         match(TRUE) -> Literal(true)
         match(NIL) -> Literal(null)
         match(NUMBER, STRING) -> Literal(previous().literal)
+        match(IDENTIFIER) -> Variable(previous())
 
         match(LEFT_PAREN) -> {
             val expression = expression()

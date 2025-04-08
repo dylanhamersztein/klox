@@ -1,10 +1,9 @@
 package org.hamersztein.klox.interpreter
 
-import org.hamersztein.klox.ast.expression.impl.Binary
-import org.hamersztein.klox.ast.expression.impl.Grouping
-import org.hamersztein.klox.ast.expression.impl.Literal
-import org.hamersztein.klox.ast.expression.impl.Unary
+import org.hamersztein.klox.ast.expression.impl.*
 import org.hamersztein.klox.ast.statement.impl.Print
+import org.hamersztein.klox.ast.statement.impl.Var
+import org.hamersztein.klox.environment.Environment
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType
 import org.hamersztein.klox.token.TokenType.*
@@ -16,8 +15,53 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class InterpreterTest {
+
+    @Test
+    fun `should interpret a variable statement with initializer and save it to the environment`() {
+        val testEnvironment = Environment()
+
+        val nameToken = Token(IDENTIFIER, "breakfast", null, 1)
+        val initializer = Literal(3.0)
+        val statements = listOf(Var(nameToken, initializer))
+
+        val interpreter = Interpreter(testEnvironment)
+        interpreter.interpret(statements)
+
+        assertEquals(initializer.value, testEnvironment[nameToken])
+    }
+
+    @Test
+    fun `should interpret a variable statement without initializer and save it to the environment`() {
+        val testEnvironment = Environment()
+
+        val nameToken = Token(IDENTIFIER, "breakfast", null, 1)
+        val statements = listOf(Var(nameToken))
+
+        val interpreter = Interpreter(testEnvironment)
+        interpreter.interpret(statements)
+
+        assertNull(testEnvironment[nameToken])
+    }
+
+    @Test
+    fun `should log runtime error when attempting to reference variable that hasn't been declared`() {
+        val originalSystemErr = System.err
+        val outputStreamCaptor = ByteArrayOutputStream()
+        System.setErr(PrintStream(outputStreamCaptor))
+
+        val statements = listOf(Print(Variable(Token(IDENTIFIER, "breakfast", null, 1))))
+
+        val interpreter = Interpreter()
+
+        interpreter.interpret(statements)
+
+        assertEquals("Undefined variable breakfast\n[line 1]", outputStreamCaptor.toString().trim())
+
+        System.setErr(originalSystemErr)
+    }
 
     @Test
     fun `should interpret a print statement correctly`() {
