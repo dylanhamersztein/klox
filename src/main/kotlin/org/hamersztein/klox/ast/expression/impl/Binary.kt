@@ -5,5 +5,5 @@ import org.hamersztein.klox.ast.expression.Visitor
 import org.hamersztein.klox.token.Token
 
 class Binary(val left: Expression, val operator: Token, val right: Expression) : Expression() {
-    override fun <R> accept(visitor: Visitor<R>) = visitor.visitBinaryExpr(this)
+    override fun <R> accept(visitor: Visitor<R>) = visitor.visitBinaryExpression(this)
 }

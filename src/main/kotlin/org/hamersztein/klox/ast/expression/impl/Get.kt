@@ -5,5 +5,5 @@ import org.hamersztein.klox.ast.expression.Visitor
 import org.hamersztein.klox.token.Token
 
 class Get(val obj: Expression, val name: Token) : Expression() {
-    override fun <R> accept(visitor: Visitor<R>) = visitor.visitGetExpr(this)
+    override fun <R> accept(visitor: Visitor<R>) = visitor.visitGetExpression(this)
 }

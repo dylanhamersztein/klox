@@ -8,45 +8,45 @@ import org.hamersztein.klox.ast.expression.impl.Set
 class AstPrinter : Visitor<String> {
     fun print(expression: Expression) = expression.accept(this)
 
-    override fun visitBinaryExpr(expr: Binary) = parenthesize(expr.operator.lexeme, expr.left, expr.right)
+    override fun visitBinaryExpression(expr: Binary) = parenthesize(expr.operator.lexeme, expr.left, expr.right)
 
-    override fun visitGroupingExpr(expr: Grouping) = parenthesize("group", expr.expression)
+    override fun visitGroupingExpression(expr: Grouping) = parenthesize("group", expr.expression)
 
-    override fun visitLiteralExpr(expr: Literal) = expr.value?.toString() ?: "nil"
+    override fun visitLiteralExpression(expr: Literal) = expr.value?.toString() ?: "nil"
 
-    override fun visitUnaryExpr(expr: Unary) = parenthesize(expr.operator.lexeme, expr.right)
+    override fun visitUnaryExpression(expr: Unary) = parenthesize(expr.operator.lexeme, expr.right)
 
     override fun visitTernaryExpression(expr: Ternary) = parenthesize(print(expr.condition), expr.left, expr.right)
 
-    override fun visitAssignExpr(expr: Assign): String {
+    override fun visitAssignExpression(expr: Assign): String {
         TODO("Not yet implemented")
     }
 
-    override fun visitCallExpr(expr: Call): String {
+    override fun visitCallExpression(expr: Call): String {
         TODO("Not yet implemented")
     }
 
-    override fun visitGetExpr(expr: Get): String {
+    override fun visitGetExpression(expr: Get): String {
         TODO("Not yet implemented")
     }
 
-    override fun visitLogicalExpr(expr: Logical): String {
+    override fun visitLogicalExpression(expr: Logical): String {
         TODO("Not yet implemented")
     }
 
-    override fun visitSetExpr(expr: Set): String {
+    override fun visitSetExpression(expr: Set): String {
         TODO("Not yet implemented")
     }
 
-    override fun visitSuperExpr(expr: Super): String {
+    override fun visitSuperExpression(expr: Super): String {
         TODO("Not yet implemented")
     }
 
-    override fun visitThisExpr(expr: This): String {
+    override fun visitThisExpression(expr: This): String {
         TODO("Not yet implemented")
     }
 
-    override fun visitVariableExpr(expr: Variable): String {
+    override fun visitVariableExpression(expr: Variable): String {
         TODO("Not yet implemented")
     }
 

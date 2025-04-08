@@ -24,11 +24,11 @@ class Interpreter(private val env: Environment = Environment()) : ExpressionVisi
         }
     }
 
-    override fun visitLiteralExpr(expr: Literal) = expr.value
+    override fun visitLiteralExpression(expr: Literal) = expr.value
 
-    override fun visitGroupingExpr(expr: Grouping) = evaluate(expr.expression)
+    override fun visitGroupingExpression(expr: Grouping) = evaluate(expr.expression)
 
-    override fun visitUnaryExpr(expr: Unary): Any? {
+    override fun visitUnaryExpression(expr: Unary): Any? {
         val right = evaluate(expr.right)
 
         return when (expr.operator.type) {
@@ -42,7 +42,7 @@ class Interpreter(private val env: Environment = Environment()) : ExpressionVisi
         }
     }
 
-    override fun visitBinaryExpr(expr: Binary): Any? {
+    override fun visitBinaryExpression(expr: Binary): Any? {
         val left = evaluate(expr.left)
         val right = evaluate(expr.right)
 
@@ -111,33 +111,33 @@ class Interpreter(private val env: Environment = Environment()) : ExpressionVisi
         }
     }
 
-    override fun visitVariableExpr(expr: Variable) = env[expr.name]
+    override fun visitVariableExpression(expr: Variable) = env[expr.name]
 
-    override fun visitAssignExpr(expr: Assign): Any? {
+    override fun visitAssignExpression(expr: Assign): Any? {
         TODO("Not yet implemented")
     }
 
-    override fun visitCallExpr(expr: Call): Any? {
+    override fun visitCallExpression(expr: Call): Any? {
         TODO("Not yet implemented")
     }
 
-    override fun visitGetExpr(expr: Get): Any? {
+    override fun visitGetExpression(expr: Get): Any? {
         TODO("Not yet implemented")
     }
 
-    override fun visitLogicalExpr(expr: Logical): Any? {
+    override fun visitLogicalExpression(expr: Logical): Any? {
         TODO("Not yet implemented")
     }
 
-    override fun visitSetExpr(expr: Set): Any? {
+    override fun visitSetExpression(expr: Set): Any? {
         TODO("Not yet implemented")
     }
 
-    override fun visitSuperExpr(expr: Super): Any? {
+    override fun visitSuperExpression(expr: Super): Any? {
         TODO("Not yet implemented")
     }
 
-    override fun visitThisExpr(expr: This): Any? {
+    override fun visitThisExpression(expr: This): Any? {
         TODO("Not yet implemented")
     }
 

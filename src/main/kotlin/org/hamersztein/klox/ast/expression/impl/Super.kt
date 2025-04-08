@@ -5,5 +5,5 @@ import org.hamersztein.klox.ast.expression.Visitor
 import org.hamersztein.klox.token.Token
 
 class Super(val keyword: Token, val method: Token) : Expression() {
-    override fun <R> accept(visitor: Visitor<R>) = visitor.visitSuperExpr(this)
+    override fun <R> accept(visitor: Visitor<R>) = visitor.visitSuperExpression(this)
 }
