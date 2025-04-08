@@ -91,7 +91,7 @@ class InterpreterTest {
         )
 
         val interpreter = Interpreter()
-        val result = interpreter.visitGroupingExpr(expression)
+        val result = interpreter.visitGroupingExpression(expression)
 
         assertEquals(4.0, result)
     }
@@ -102,7 +102,7 @@ class InterpreterTest {
         val expression = Literal(value)
 
         val interpreter = Interpreter()
-        val result = interpreter.visitLiteralExpr(expression)
+        val result = interpreter.visitLiteralExpression(expression)
 
         assertEquals(expression.value, result)
     }
@@ -113,7 +113,7 @@ class InterpreterTest {
         val expression = Unary(Token(tokenType, "", null, 1), Literal(literal))
 
         val interpreter = Interpreter()
-        val result = interpreter.visitUnaryExpr(expression)
+        val result = interpreter.visitUnaryExpression(expression)
 
         assertEquals(expected, result)
     }
@@ -128,7 +128,7 @@ class InterpreterTest {
         )
 
         val interpreter = Interpreter()
-        val result = interpreter.visitBinaryExpr(expression)
+        val result = interpreter.visitBinaryExpression(expression)
 
         assertEquals(expected, result)
     }
@@ -141,7 +141,7 @@ class InterpreterTest {
         val interpreter = Interpreter()
 
         val exception = assertThrows<RuntimeError> {
-            interpreter.visitUnaryExpr(expression)
+            interpreter.visitUnaryExpression(expression)
         }
 
         assertEquals(token, exception.token)
@@ -162,7 +162,7 @@ class InterpreterTest {
         val interpreter = Interpreter()
 
         val exception = assertThrows<RuntimeError> {
-            interpreter.visitBinaryExpr(expression)
+            interpreter.visitBinaryExpression(expression)
         }
 
         assertEquals(token, exception.token)
