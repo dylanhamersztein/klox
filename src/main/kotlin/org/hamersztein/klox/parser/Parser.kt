@@ -9,8 +9,10 @@ import org.hamersztein.klox.ast.statement.impl.Var
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType
 import org.hamersztein.klox.token.TokenType.*
+import kotlin.contracts.ExperimentalContracts
 import org.hamersztein.klox.ast.statement.impl.Expression as ExpressionStatement
 
+@ExperimentalContracts
 class Parser(private val tokens: List<Token>) {
     private var current = 0
 

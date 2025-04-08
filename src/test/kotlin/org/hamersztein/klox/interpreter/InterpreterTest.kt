@@ -14,9 +14,11 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
+import kotlin.contracts.ExperimentalContracts
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
+@ExperimentalContracts
 class InterpreterTest {
 
     @Test

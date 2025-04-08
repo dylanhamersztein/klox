@@ -8,9 +8,15 @@ import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
+import kotlin.contracts.ExperimentalContracts
 import kotlin.test.assertEquals
 import org.hamersztein.klox.ast.statement.impl.Expression as ExpressionStatement
 
+@ExperimentalContracts
 class ParserTest {
 
     @Test
@@ -217,6 +223,79 @@ class ParserTest {
                 assertEquals(1, value)
             }
         }
+    }
+
+    @Test
+    fun `should create a literal expression from nil`() {
+        val tokens = listOf(
+            Token(NIL, "nil", null, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(EOF, "", null, 1),
+        )
+
+        assertTokensThatProduceExpressionStatement(tokens) {
+            assertTrue(it is Literal)
+            with(it as Literal) {
+                assertNull(value)
+            }
+        }
+    }
+
+    @ValueSource(booleans = [true, false])
+    @ParameterizedTest(name = "should create a literal expression from {0}")
+    fun `should create a literal expression from a boolean`(literal: Boolean) {
+        val tokenType = if (literal) TRUE else FALSE
+        val tokens = listOf(
+            Token(tokenType, literal.toString(), literal, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(EOF, "", null, 1),
+        )
+
+        assertTokensThatProduceExpressionStatement(tokens) {
+            assertTrue(it is Literal)
+            with(it as Literal) {
+                assertEquals(literal, value)
+            }
+        }
+    }
+
+    @Test
+    fun `should create variable expression from an identifier`() {
+        val identifierToken = Token(IDENTIFIER, "muffin", null, 1)
+
+        val tokens = listOf(
+            identifierToken,
+            Token(SEMICOLON, ";", null, 1),
+            Token(EOF, "", null, 1),
+        )
+
+        assertTokensThatProduceExpressionStatement(tokens) {
+            assertTrue(it is Variable)
+            with(it as Variable) {
+                assertEquals(identifierToken, name)
+            }
+        }
+    }
+
+    @Test
+    fun `should log error when parentheses aren't closed`() {
+        val originalSystemErr = System.err
+        val outputStreamCaptor = ByteArrayOutputStream()
+        System.setErr(PrintStream(outputStreamCaptor))
+
+        val tokens = listOf(
+            Token(LEFT_PAREN, "(", null, 1),
+            Token(NUMBER, "1", 1.0, 1),
+            Token(PLUS, "+", null, 1),
+            Token(NUMBER, "1", 1.0, 1),
+            Token(EOF, "", null, 1),
+        )
+
+        Parser(tokens).parse()
+
+        assertEquals("[1]: Error at end: Expect ')' after expression.", outputStreamCaptor.toString().trim())
+
+        System.setErr(originalSystemErr)
     }
 
     @Test

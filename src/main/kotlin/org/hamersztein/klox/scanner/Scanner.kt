@@ -4,7 +4,9 @@ import org.hamersztein.klox.Lox
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType
 import org.hamersztein.klox.token.TokenType.*
+import kotlin.contracts.ExperimentalContracts
 
+@ExperimentalContracts
 class Scanner(private val source: String) {
 
     private val tokens = mutableListOf<Token>()
@@ -85,6 +87,7 @@ class Scanner(private val source: String) {
 
         if (isAtEnd()) {
             Lox.error(line, "Unterminated string.")
+            return
         }
 
         // closing "

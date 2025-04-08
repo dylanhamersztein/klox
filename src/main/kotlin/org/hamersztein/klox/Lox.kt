@@ -11,8 +11,10 @@ import java.io.InputStreamReader
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.contracts.ExperimentalContracts
 import kotlin.system.exitProcess
 
+@ExperimentalContracts
 class Lox {
     companion object {
         private var hadError = false
@@ -84,6 +86,7 @@ class Lox {
     }
 }
 
+@ExperimentalContracts
 fun main(args: Array<String>) {
     when {
         args.size > 1 -> {
