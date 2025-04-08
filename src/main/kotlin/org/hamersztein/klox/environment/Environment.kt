@@ -11,11 +11,22 @@ class Environment {
         values[name] = value
     }
 
+    operator fun set(name: Token, value: Any?) {
+        if (values.containsKey(name.lexeme)) {
+            values[name.lexeme] = value
+            return
+        }
+
+        throw runtimeError(name)
+    }
+
     operator fun get(name: Token): Any? =
         if (values.containsKey(name.lexeme)) {
             values[name.lexeme]
         } else {
-            throw RuntimeError(name, "Undefined variable ${name.lexeme}")
+            throw runtimeError(name)
         }
+
+    private fun runtimeError(name: Token) = RuntimeError(name, "Undefined variable ${name.lexeme}")
 
 }

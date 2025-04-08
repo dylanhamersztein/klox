@@ -117,7 +117,10 @@ class Interpreter(private val env: Environment = Environment()) : ExpressionVisi
     override fun visitVariableExpression(expr: Variable) = env[expr.name]
 
     override fun visitAssignExpression(expr: Assign): Any? {
-        TODO("Not yet implemented")
+        val value = evaluate(expr.value)
+        env[expr.name] = value
+
+        return value
     }
 
     override fun visitCallExpression(expr: Call): Any? {
