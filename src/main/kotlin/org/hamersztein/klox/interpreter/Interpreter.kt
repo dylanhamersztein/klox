@@ -7,15 +7,16 @@ import org.hamersztein.klox.ast.expression.impl.Set
 import org.hamersztein.klox.ast.statement.Statement
 import org.hamersztein.klox.ast.statement.impl.*
 import org.hamersztein.klox.ast.statement.impl.Function
+import org.hamersztein.klox.environment.Environment
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType.*
 import org.hamersztein.klox.ast.expression.Visitor as ExpressionVisitor
 import org.hamersztein.klox.ast.statement.Visitor as StatementVisitor
 import org.hamersztein.klox.ast.statement.impl.Expression as ExpressionStatement
 
-class Interpreter : ExpressionVisitor<Any?>, StatementVisitor<Unit> {
+class Interpreter(private val env: Environment = Environment()) : ExpressionVisitor<Any?>, StatementVisitor<Unit> {
 
-    fun interpret(statements: List<Statement>) {
+    fun interpret(statements: List<Statement?>) {
         try {
             statements.forEach(::execute)
         } catch (e: RuntimeError) {
@@ -110,6 +111,8 @@ class Interpreter : ExpressionVisitor<Any?>, StatementVisitor<Unit> {
         }
     }
 
+    override fun visitVariableExpr(expr: Variable) = env[expr.name]
+
     override fun visitAssignExpr(expr: Assign): Any? {
         TODO("Not yet implemented")
     }
@@ -138,10 +141,6 @@ class Interpreter : ExpressionVisitor<Any?>, StatementVisitor<Unit> {
         TODO("Not yet implemented")
     }
 
-    override fun visitVariableExpr(expr: Variable): Any? {
-        TODO("Not yet implemented")
-    }
-
     override fun visitTernaryExpression(expr: Ternary): Any? {
         TODO("Not yet implemented")
     }
@@ -153,6 +152,10 @@ class Interpreter : ExpressionVisitor<Any?>, StatementVisitor<Unit> {
     override fun visitPrintStatement(statement: Print) {
         val value = evaluate(statement.expression)
         println(stringify(value))
+    }
+
+    override fun visitVarStatement(statement: Var) {
+        env[statement.name.lexeme] = statement.initializer?.let(::evaluate)
     }
 
     override fun visitBlockStatement(statement: Block) {
@@ -175,15 +178,11 @@ class Interpreter : ExpressionVisitor<Any?>, StatementVisitor<Unit> {
         TODO("Not yet implemented")
     }
 
-    override fun visitVarStatement(statement: Var) {
-        TODO("Not yet implemented")
-    }
-
     override fun visitWhileStatement(statement: While) {
         TODO("Not yet implemented")
     }
 
-    private fun execute(statement: Statement) = statement.accept(this)
+    private fun execute(statement: Statement?) = statement?.accept(this)
 
     private fun evaluate(expr: Expression) = expr.accept(this)
 
