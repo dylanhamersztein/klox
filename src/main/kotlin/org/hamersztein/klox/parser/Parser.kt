@@ -57,7 +57,25 @@ class Parser(private val tokens: List<Token>) {
         return ExpressionStatement(value)
     }
 
-    private fun expression() = ternary()
+    private fun expression() = assignment()
+
+    private fun assignment(): Expression {
+        val expression = ternary()
+
+        if (match(EQUAL)) {
+            val equals = previous()
+            val value = assignment()
+
+            if (expression is Variable) {
+                val name = expression.name
+                return Assign(name, value)
+            }
+
+            error(equals, "Invalid assignment target.");
+        }
+
+        return expression
+    }
 
     private fun ternary(): Expression {
         var expression = equality()

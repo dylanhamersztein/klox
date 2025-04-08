@@ -6,12 +6,11 @@ import org.hamersztein.klox.ast.statement.impl.Print
 import org.hamersztein.klox.ast.statement.impl.Var
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType.*
+import org.hamersztein.klox.util.TestUtils.mockSystemErrorStream
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import java.io.ByteArrayOutputStream
-import java.io.PrintStream
 import kotlin.contracts.ExperimentalContracts
 import kotlin.test.assertEquals
 import org.hamersztein.klox.ast.statement.impl.Expression as ExpressionStatement
@@ -279,9 +278,7 @@ class ParserTest {
 
     @Test
     fun `should log error when parentheses aren't closed`() {
-        val originalSystemErr = System.err
-        val outputStreamCaptor = ByteArrayOutputStream()
-        System.setErr(PrintStream(outputStreamCaptor))
+        val (outputStreamCaptor, resetSystemError) = mockSystemErrorStream()
 
         val tokens = listOf(
             Token(LEFT_PAREN, "(", null, 1),
@@ -295,7 +292,7 @@ class ParserTest {
 
         assertEquals("[1]: Error at end: Expect ')' after expression.", outputStreamCaptor.toString().trim())
 
-        System.setErr(originalSystemErr)
+        resetSystemError()
     }
 
     @Test
@@ -422,19 +419,60 @@ class ParserTest {
         assertTrue((statements[0] as ExpressionStatement).expression is Binary)
     }
 
+    @Test
+    fun `should create an assignment expression`() {
+        val identifierToken = Token(IDENTIFIER, "muffin", null, 1)
+
+        val tokens = listOf(
+            identifierToken,
+            Token(EQUAL, "=", null, 1),
+            Token(NUMBER, "1", 1.0, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(EOF, "", null, 1)
+        )
+
+        assertTokensThatProduceExpressionStatement(tokens) {
+            assertTrue(it is Assign)
+            with(it as Assign) {
+                assertEquals(identifierToken, name)
+                assertEquals(Literal(1.0), value)
+            }
+        }
+    }
+
+    @Test
+    fun `should log error on invalid assignment target`() {
+        val (outputStreamCaptor, resetSystemError) = mockSystemErrorStream()
+
+        val tokens = listOf(
+            Token(NUMBER, "1", 1.0, 1),
+            Token(EQUAL, "=", null, 1),
+            Token(NUMBER, "1", 1.0, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(EOF, "", null, 1)
+        )
+
+        val parser = Parser(tokens)
+        parser.parse()
+
+        assertEquals("[1]: Error  at '=': Invalid assignment target.", outputStreamCaptor.toString().trim())
+
+        resetSystemError()
+    }
+
     private fun assertTokensThatProduceExpressionStatement(
         tokens: List<Token>,
         assertFunction: (e: Expression) -> Unit
     ) {
         val parser = Parser(tokens)
 
-        val expression = parser.parse()
+        val statements = parser.parse()
 
-        assertNotNull(expression)
-        assertEquals(1, expression.size)
-        assertTrue(expression[0] is ExpressionStatement)
+        assertNotNull(statements)
+        assertEquals(1, statements.size)
+        assertTrue(statements[0] is ExpressionStatement)
 
-        assertFunction((expression[0] as ExpressionStatement).expression)
+        assertFunction((statements[0] as ExpressionStatement).expression)
     }
 
 }

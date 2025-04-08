@@ -7,13 +7,13 @@ import org.hamersztein.klox.environment.Environment
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType
 import org.hamersztein.klox.token.TokenType.*
+import org.hamersztein.klox.util.TestUtils.mockSystemErrorStream
+import org.hamersztein.klox.util.TestUtils.mockSystemOutStream
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.io.ByteArrayOutputStream
-import java.io.PrintStream
 import kotlin.contracts.ExperimentalContracts
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -50,9 +50,7 @@ class InterpreterTest {
 
     @Test
     fun `should log runtime error when attempting to reference variable that hasn't been declared`() {
-        val originalSystemErr = System.err
-        val outputStreamCaptor = ByteArrayOutputStream()
-        System.setErr(PrintStream(outputStreamCaptor))
+        val (outputStreamCaptor, resetSystemError) = mockSystemErrorStream()
 
         val statements = listOf(Print(Variable(Token(IDENTIFIER, "breakfast", null, 1))))
 
@@ -62,14 +60,12 @@ class InterpreterTest {
 
         assertEquals("Undefined variable breakfast\n[line 1]", outputStreamCaptor.toString().trim())
 
-        System.setErr(originalSystemErr)
+        resetSystemError()
     }
 
     @Test
     fun `should interpret a print statement correctly`() {
-        val originalSystemOut = System.out
-        val outputStreamCaptor = ByteArrayOutputStream()
-        System.setOut(PrintStream(outputStreamCaptor))
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
 
         val literalValue = "hello, world!"
         val statements = listOf(Print(Literal(literalValue)))
@@ -79,7 +75,7 @@ class InterpreterTest {
 
         assertEquals(literalValue, outputStreamCaptor.toString().trim())
 
-        System.setOut(originalSystemOut)
+        resetOutStream()
     }
 
     @Test
