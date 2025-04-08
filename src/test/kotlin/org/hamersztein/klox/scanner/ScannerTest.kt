@@ -9,7 +9,11 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
+import kotlin.contracts.ExperimentalContracts
 
+@ExperimentalContracts
 class ScannerTest {
 
     @Test
@@ -129,6 +133,77 @@ class ScannerTest {
             assertEquals(expectedToken, it[0])
 
             assertEquals(EOF, it[1].type)
+        }
+    }
+
+    @Test
+    fun `should log error and return EOF token when scanning unrecognised character`() {
+        val originalSystemErr = System.err
+        val outputStreamCaptor = ByteArrayOutputStream()
+        System.setErr(PrintStream(outputStreamCaptor))
+
+        val program = "^"
+
+        val scanner = Scanner(program)
+        val tokens = scanner.scanTokens()
+
+        assertEquals(1, tokens.size)
+        assertEquals(EOF, tokens[0].type)
+
+        assertEquals("[1]: Error : Unexpected character.", outputStreamCaptor.toString().trim())
+
+        System.setErr(originalSystemErr)
+    }
+
+    @Test
+    fun `should log error and return EOF token when scanning unterminated string`() {
+        val originalSystemErr = System.err
+        val outputStreamCaptor = ByteArrayOutputStream()
+        System.setErr(PrintStream(outputStreamCaptor))
+
+        val program = """"some string value"""
+
+        val scanner = Scanner(program)
+        val tokens = scanner.scanTokens()
+
+        assertEquals(1, tokens.size)
+        assertEquals(EOF, tokens[0].type)
+
+        assertEquals("[1]: Error : Unterminated string.", outputStreamCaptor.toString().trim())
+
+        System.setErr(originalSystemErr)
+    }
+
+    @Test
+    fun `should scan multiline strings`() {
+        val program = """"some 
+            |string"""".trimMargin()
+
+        val scanner = Scanner(program)
+        val tokens = scanner.scanTokens()
+
+        assertEquals(2, tokens.size)
+        assertEquals(Token(STRING, "\"some \nstring\"", "some \nstring", 2), tokens[0])
+        assertEquals(Token(EOF, "", null, 2), tokens[1])
+    }
+
+    @Test
+    fun `should scan number token when number has more than one digit`() {
+        val program = "123"
+        assertProgram(program) { tokens ->
+            assertEquals(2, tokens.size)
+            assertEquals(Token(NUMBER, "123", 123.0, 1), tokens[0])
+            assertEquals(Token(EOF, "", null, 1), tokens[1])
+        }
+    }
+
+    @Test
+    fun `should scan number token when number has decimal value`() {
+        val program = "12.3"
+        assertProgram(program) { tokens ->
+            assertEquals(2, tokens.size)
+            assertEquals(Token(NUMBER, "12.3", 12.3, 1), tokens[0])
+            assertEquals(Token(EOF, "", null, 1), tokens[1])
         }
     }
 

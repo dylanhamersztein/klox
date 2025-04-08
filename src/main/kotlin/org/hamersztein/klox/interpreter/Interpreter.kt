@@ -10,10 +10,13 @@ import org.hamersztein.klox.ast.statement.impl.Function
 import org.hamersztein.klox.environment.Environment
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType.*
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import org.hamersztein.klox.ast.expression.Visitor as ExpressionVisitor
 import org.hamersztein.klox.ast.statement.Visitor as StatementVisitor
 import org.hamersztein.klox.ast.statement.impl.Expression as ExpressionStatement
 
+@ExperimentalContracts
 class Interpreter(private val env: Environment = Environment()) : ExpressionVisitor<Any?>, StatementVisitor<Unit> {
 
     fun interpret(statements: List<Statement?>) {
@@ -34,7 +37,7 @@ class Interpreter(private val env: Environment = Environment()) : ExpressionVisi
         return when (expr.operator.type) {
             MINUS -> {
                 checkNumberOperand(expr.operator, right)
-                -(right as Double)
+                -right
             }
 
             BANG -> !isTruthy(right)
@@ -49,18 +52,18 @@ class Interpreter(private val env: Environment = Environment()) : ExpressionVisi
         return when (expr.operator.type) {
             MINUS -> {
                 checkNumberOperands(expr.operator, left, right)
-                (left as Double) - (right as Double)
+                left - right
             }
 
             SLASH -> {
                 checkNumberOperands(expr.operator, left, right)
                 checkRightIsNotZero(expr.operator, right)
-                (left as Double) / (right as Double)
+                left / right
             }
 
             STAR -> {
                 checkNumberOperands(expr.operator, left, right)
-                (left as Double) * (right as Double)
+                left * right
             }
 
             PLUS -> when {
@@ -86,22 +89,22 @@ class Interpreter(private val env: Environment = Environment()) : ExpressionVisi
 
             GREATER -> {
                 checkNumberOperands(expr.operator, left, right)
-                (left as Double) > (right as Double)
+                left > right
             }
 
             GREATER_EQUAL -> {
                 checkNumberOperands(expr.operator, left, right)
-                (left as Double) >= (right as Double)
+                left >= right
             }
 
             LESS -> {
                 checkNumberOperands(expr.operator, left, right)
-                (left as Double) < (right as Double)
+                left < right
             }
 
             LESS_EQUAL -> {
                 checkNumberOperands(expr.operator, left, right)
-                (left as Double) <= (right as Double)
+                left <= right
             }
 
             BANG_EQUAL -> !isEqual(left, right)
@@ -198,20 +201,28 @@ class Interpreter(private val env: Environment = Environment()) : ExpressionVisi
         else -> a == b
     }
 
-    private fun checkNumberOperands(operator: Token, vararg operands: Any?) {
-        operands.forEach {
-            checkNumberOperand(operator, it)
+    private fun checkNumberOperands(operator: Token, left: Any?, right: Any?) {
+        contract {
+            returns() implies (left is Double && right is Double)
+        }
+
+        if (left !is Double || right !is Double) {
+            throw RuntimeError(operator, "Operand must be a number.")
         }
     }
 
     private fun checkNumberOperand(operator: Token, operand: Any?) {
+        contract {
+            returns() implies (operand is Double)
+        }
+
         if (operand !is Double) {
             throw RuntimeError(operator, "Operand must be a number.")
         }
     }
 
-    private fun checkRightIsNotZero(token: Token, right: Any?) {
-        if (right is Double && right == 0.0) {
+    private fun checkRightIsNotZero(token: Token, right: Double) {
+        if (right == 0.0) {
             throw RuntimeError(token, "Cannot divide by 0")
         }
     }
