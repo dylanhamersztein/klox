@@ -1,6 +1,7 @@
 package org.hamersztein.klox.interpreter
 
 import org.hamersztein.klox.ast.expression.impl.*
+import org.hamersztein.klox.ast.statement.impl.Expression
 import org.hamersztein.klox.ast.statement.impl.Print
 import org.hamersztein.klox.ast.statement.impl.Var
 import org.hamersztein.klox.environment.Environment
@@ -92,6 +93,52 @@ class InterpreterTest {
         val result = interpreter.visitGroupingExpression(expression)
 
         assertEquals(4.0, result)
+    }
+
+    @Test
+    fun `should interpret assign expression correctly when variable already exists in environment`() {
+        val environment = Environment()
+        environment["breakfast"] = "toast"
+
+        val identifierToken = Token(IDENTIFIER, "breakfast", null, 1)
+
+        val statements = listOf(
+            Expression(
+                Assign(
+                    identifierToken,
+                    Literal("muffin")
+                )
+            )
+        )
+
+        val interpreter = Interpreter(environment)
+        interpreter.interpret(statements)
+
+        assertEquals("muffin", environment[identifierToken])
+    }
+
+    @Test
+    fun `should log error when assign expression refers to variable that does not exist`() {
+        val (outputStream, resetSystemError) = mockSystemErrorStream()
+
+        val identifierToken = Token(IDENTIFIER, "breakfast", null, 1)
+
+        val statements = listOf(
+            Expression(
+                Assign(
+                    identifierToken,
+                    Literal("muffin")
+                )
+            )
+        )
+
+        val interpreter = Interpreter()
+
+        interpreter.interpret(statements)
+
+        assertEquals("Undefined variable breakfast\n[line 1]", outputStream.toString().trim())
+
+        resetSystemError()
     }
 
     @MethodSource("provideArgumentsForLiteralTest")
