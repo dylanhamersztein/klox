@@ -2,6 +2,7 @@ package org.hamersztein.klox.parser
 
 import org.hamersztein.klox.ast.expression.Expression
 import org.hamersztein.klox.ast.expression.impl.*
+import org.hamersztein.klox.ast.statement.impl.Block
 import org.hamersztein.klox.ast.statement.impl.Print
 import org.hamersztein.klox.ast.statement.impl.Var
 import org.hamersztein.klox.token.Token
@@ -458,6 +459,27 @@ class ParserTest {
         assertEquals("[1]: Error  at '=': Invalid assignment target.", outputStreamCaptor.toString().trim())
 
         resetSystemError()
+    }
+
+    @Test
+    fun `should create block statement`() {
+        val tokens = listOf(
+            Token(LEFT_BRACE, "{", null, 1),
+            Token(VAR, "var", null, 2),
+            Token(IDENTIFIER, "muffin", null, 2),
+            Token(EQUAL, "=", null, 2),
+            Token(NUMBER, "1", 1.0, 2),
+            Token(SEMICOLON, ";", null, 2),
+            Token(RIGHT_BRACE, "}", null, 3),
+            Token(EOF, "", null, 3),
+        )
+
+        val parser = Parser(tokens)
+        val statements = parser.parse()
+
+        assertEquals(1, statements.size)
+        assertTrue(statements[0] is Block)
+        assertEquals(1, (statements[0] as Block).statements.size)
     }
 
     private fun assertTokensThatProduceExpressionStatement(

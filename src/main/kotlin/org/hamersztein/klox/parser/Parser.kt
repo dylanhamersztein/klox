@@ -4,6 +4,7 @@ import org.hamersztein.klox.Lox
 import org.hamersztein.klox.ast.expression.Expression
 import org.hamersztein.klox.ast.expression.impl.*
 import org.hamersztein.klox.ast.statement.Statement
+import org.hamersztein.klox.ast.statement.impl.Block
 import org.hamersztein.klox.ast.statement.impl.Print
 import org.hamersztein.klox.ast.statement.impl.Var
 import org.hamersztein.klox.token.Token
@@ -41,13 +42,29 @@ class Parser(private val tokens: List<Token>) {
         return Var(name, initializer)
     }
 
-    private fun statement() = if (match(PRINT)) printStatement() else expressionStatement()
+    private fun statement() = when {
+        match(PRINT) -> printStatement()
+        match(LEFT_BRACE) -> Block(block())
+        else -> expressionStatement()
+    }
 
     private fun printStatement(): Statement {
         val value = expression()
         consume(SEMICOLON, "Expect ';' after value.")
 
         return Print(value)
+    }
+
+    private fun block(): List<Statement?> {
+        val statements = mutableListOf<Statement?>()
+
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            statements += declaration()
+        }
+
+        consume(RIGHT_BRACE, "Expect '}' after block.")
+
+        return statements.toList()
     }
 
     private fun expressionStatement(): Statement {

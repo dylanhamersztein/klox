@@ -22,7 +22,7 @@ class EnvironmentTest {
         val name = "breakfast"
         val value = "muffin"
 
-        environment[name] = value
+        environment.define(name, value)
 
         val fetchedValue = environment[Token(IDENTIFIER, name, null, 1)]
 
@@ -34,7 +34,7 @@ class EnvironmentTest {
         val name = "breakfast"
         val value = null
 
-        environment[name] = value
+        environment.define(name, value)
 
         val fetchedValue = environment[Token(IDENTIFIER, name, null, 1)]
 
@@ -46,10 +46,10 @@ class EnvironmentTest {
         val name = "breakfast"
         val value = "muffin"
 
-        environment[name] = value
+        environment.define(name, value)
 
         val token = Token(IDENTIFIER, name, null, 1)
-        environment[token] = "toast"
+        environment.assign(token, "toast")
 
         assertEquals("toast", environment[token])
     }
@@ -59,7 +59,7 @@ class EnvironmentTest {
         val name = Token(IDENTIFIER, "breakfast", null, 1)
 
         val enclosingEnvironment = Environment()
-        enclosingEnvironment[name.lexeme] = "muffin"
+        enclosingEnvironment.define(name.lexeme, "muffin")
 
         environment = Environment(enclosingEnvironment)
 
@@ -74,12 +74,12 @@ class EnvironmentTest {
         val value = "muffin"
 
         val enclosingEnvironment = Environment()
-        enclosingEnvironment[name] = value
+        enclosingEnvironment.define(name, value)
 
         environment = Environment(enclosingEnvironment)
 
         val token = Token(IDENTIFIER, name, null, 1)
-        environment[token] = "toast"
+        environment.assign(token, "toast")
 
         assertEquals("toast", environment[token])
     }
@@ -119,7 +119,7 @@ class EnvironmentTest {
         val token = Token(IDENTIFIER, "breakfast", null, 1)
 
         val error = assertThrows<RuntimeError> {
-            environment[token] = "muffin"
+            environment.assign(token, "muffin")
         }
 
         assertEquals(token, error.token)

@@ -7,18 +7,18 @@ class Environment(val enclosing: Environment? = null) {
 
     private val values = mutableMapOf<String, Any?>()
 
-    operator fun set(name: String, value: Any?) {
+    fun define(name: String, value: Any?) {
         values[name] = value
     }
 
-    operator fun set(name: Token, value: Any?) {
+    fun assign(name: Token, value: Any?) {
         when {
             values.containsKey(name.lexeme) -> {
                 values[name.lexeme] = value
             }
 
             enclosing !== null -> {
-                enclosing[name] = value
+                enclosing.assign(name, value)
             }
 
             else -> throw runtimeError(name)

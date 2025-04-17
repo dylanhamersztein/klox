@@ -1,6 +1,7 @@
 package org.hamersztein.klox.interpreter
 
 import org.hamersztein.klox.ast.expression.impl.*
+import org.hamersztein.klox.ast.statement.impl.Block
 import org.hamersztein.klox.ast.statement.impl.Expression
 import org.hamersztein.klox.ast.statement.impl.Print
 import org.hamersztein.klox.ast.statement.impl.Var
@@ -10,6 +11,7 @@ import org.hamersztein.klox.token.TokenType
 import org.hamersztein.klox.token.TokenType.*
 import org.hamersztein.klox.util.TestUtils.mockSystemErrorStream
 import org.hamersztein.klox.util.TestUtils.mockSystemOutStream
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
@@ -98,7 +100,7 @@ class InterpreterTest {
     @Test
     fun `should interpret assign expression correctly when variable already exists in environment`() {
         val environment = Environment()
-        environment["breakfast"] = "toast"
+        environment.define("breakfast", "toast")
 
         val identifierToken = Token(IDENTIFIER, "breakfast", null, 1)
 
@@ -213,6 +215,281 @@ class InterpreterTest {
         assertEquals(token, exception.token)
         assertEquals(expectedErrorMessage, exception.message)
 
+    }
+
+    @Test
+    fun `should interpret a block statement`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val blockStatement = Block(
+            statements = listOf(
+                Print(
+                    Literal("hello, world!")
+                )
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(listOf(blockStatement))
+
+        assertEquals("hello, world!", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @Test
+    fun `should print the correct value when block statement reassigns global variable`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val environment = Environment()
+        environment.define("breakfast", "muffin")
+
+        val blockStatement = Block(
+            statements = listOf(
+                Expression(
+                    Assign(
+                        Token(IDENTIFIER, "breakfast", null, 1),
+                        Literal("toast")
+                    )
+                ),
+                Print(
+                    Variable(Token(IDENTIFIER, "breakfast", null, 1))
+                )
+            )
+        )
+
+        val interpreter = Interpreter(environment)
+        interpreter.interpret(listOf(blockStatement))
+
+        assertEquals("toast", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @Test
+    fun `should overwrite global scope variable value when assigning in block scope`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val variableName = "breakfast"
+        val globalValue = "muffin"
+        val blockScopeValue = "toast"
+
+        val statements = listOf(
+            Var(
+                Token(IDENTIFIER, variableName, null, 1),
+                Literal(globalValue)
+            ),
+            Print(
+                Variable(Token(IDENTIFIER, variableName, null, 3))
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals(globalValue, outputStreamCaptor.toString().trim())
+        outputStreamCaptor.reset()
+
+        val blockScopedStatements = listOf(
+            Block(
+                statements = listOf(
+                    Expression(
+                        Assign(
+                            Token(IDENTIFIER, variableName, null, 3),
+                            Literal(blockScopeValue)
+                        )
+                    ),
+                    Print(
+                        Variable(Token(IDENTIFIER, variableName, null, 3))
+                    )
+                )
+            )
+        )
+
+        interpreter.interpret(blockScopedStatements)
+
+        assertEquals(blockScopeValue, outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @Test
+    fun `should shadow global scope variable value when declaring in block scope`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val variableName = "breakfast"
+        val globalValue = "muffin"
+        val blockScopeValue = "toast"
+
+        val globalScopeStatements = listOf(
+            Var(
+                Token(IDENTIFIER, variableName, null, 1),
+                Literal(globalValue)
+            ),
+            Print(
+                Variable(Token(IDENTIFIER, variableName, null, 3))
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(globalScopeStatements)
+
+        assertEquals(globalValue, outputStreamCaptor.toString().trim())
+        outputStreamCaptor.reset()
+
+        val blockScopedStatements = listOf(
+            Block(
+                statements = listOf(
+                    Var(
+                        Token(IDENTIFIER, variableName, null, 1),
+                        Literal(blockScopeValue)
+                    ),
+                    Print(
+                        Variable(Token(IDENTIFIER, variableName, null, 3))
+                    )
+                )
+            )
+        )
+
+        interpreter.interpret(blockScopedStatements)
+
+        assertEquals(blockScopeValue, outputStreamCaptor.toString().trim())
+        outputStreamCaptor.reset()
+
+        val nextGlobalScopeStatements = listOf(
+            Print(
+                Variable(Token(IDENTIFIER, variableName, null, 3))
+            )
+        )
+
+        interpreter.interpret(nextGlobalScopeStatements)
+        assertEquals(globalValue, outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @Test
+    fun `should throw error when declaring variable in block scope and referencing it outside block scope`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+        val (errorStreamCaptor, resetErrorStream) = mockSystemErrorStream()
+
+        val variableName = "breakfast"
+        val blockScopeValue = "toast"
+
+        val blockScopedStatements = listOf(
+            Block(
+                statements = listOf(
+                    Var(
+                        Token(IDENTIFIER, variableName, null, 1),
+                        Literal(blockScopeValue)
+                    ),
+                    Print(
+                        Variable(Token(IDENTIFIER, variableName, null, 1))
+                    )
+                )
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(blockScopedStatements)
+
+        assertEquals(blockScopeValue, outputStreamCaptor.toString().trim())
+        outputStreamCaptor.reset()
+
+        val globalStatements = listOf(
+            Print(
+                Variable(Token(IDENTIFIER, variableName, null, 2))
+            )
+        )
+
+        interpreter.interpret(globalStatements)
+
+        assertTrue(outputStreamCaptor.toString().trim().isEmpty())
+        assertEquals("Undefined variable $variableName\n[line 2]", errorStreamCaptor.toString().trim())
+
+        resetOutStream()
+        resetErrorStream()
+    }
+
+    @Test
+    fun `should allow redeclaration of variable in separate block scopes`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val variableName = "breakfast"
+        val firstBlockScopeValue = "toast"
+        val secondBlockScopeValue = "muffin"
+
+        val blockScopedStatements = listOf(
+            Block(
+                statements = listOf(
+                    Var(
+                        Token(IDENTIFIER, variableName, null, 1),
+                        Literal(firstBlockScopeValue)
+                    ),
+                    Print(
+                        Variable(Token(IDENTIFIER, variableName, null, 1))
+                    )
+                )
+            ),
+            Block(
+                statements = listOf(
+                    Var(
+                        Token(IDENTIFIER, variableName, null, 1),
+                        Literal(secondBlockScopeValue)
+                    ),
+                    Print(
+                        Variable(Token(IDENTIFIER, variableName, null, 1))
+                    )
+                )
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(blockScopedStatements)
+
+        assertEquals("$firstBlockScopeValue\n$secondBlockScopeValue", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @Test
+    fun `should have access to global variables inside block scope`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val globalVariableName = "breakfast"
+        val globalValue = "toast"
+
+        val blockScopeVariableName = "drink"
+        val blockScopeValue = "coffee"
+
+        val statements = listOf(
+            Var(
+                Token(IDENTIFIER, globalVariableName, null, 1),
+                Literal(globalValue)
+            ),
+            Block(
+                statements = listOf(
+                    Var(
+                        Token(IDENTIFIER, blockScopeVariableName, null, 1),
+                        Literal(blockScopeValue)
+                    ),
+                    Print(
+                        Binary(
+                            Variable(Token(IDENTIFIER, globalVariableName, null, 1)),
+                            Token(PLUS, "+", null, 1),
+                            Variable(Token(IDENTIFIER, blockScopeVariableName, null, 1))
+                        )
+                    )
+                )
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals("$globalValue$blockScopeValue", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
     }
 
     companion object {

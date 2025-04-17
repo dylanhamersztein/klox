@@ -11,8 +11,13 @@ object TestUtils {
     private fun doMock(stream: PrintStream, set: (p: PrintStream) -> Unit): Pair<ByteArrayOutputStream, () -> Unit> {
         val captor = ByteArrayOutputStream()
 
-        set(PrintStream(captor))
+        val printStream = PrintStream(captor)
+        set(printStream)
 
-        return captor to { set(stream) }
+        return captor to {
+            set(stream)
+            captor.close()
+            printStream.close()
+        }
     }
 }
