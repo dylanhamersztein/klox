@@ -17,11 +17,20 @@ import org.hamersztein.klox.ast.statement.Visitor as StatementVisitor
 import org.hamersztein.klox.ast.statement.impl.Expression as ExpressionStatement
 
 @ExperimentalContracts
-class Interpreter(private val env: Environment = Environment()) : ExpressionVisitor<Any?>, StatementVisitor<Unit> {
+class Interpreter(private var environment: Environment = Environment()) : ExpressionVisitor<Any?>,
+    StatementVisitor<Unit> {
 
     fun interpret(statements: List<Statement?>) {
         try {
             statements.forEach(::execute)
+        } catch (e: RuntimeError) {
+            Lox.runtimeError(e)
+        }
+    }
+
+    fun interpret(statement: Statement?) {
+        try {
+            execute(statement)
         } catch (e: RuntimeError) {
             Lox.runtimeError(e)
         }
@@ -114,11 +123,11 @@ class Interpreter(private val env: Environment = Environment()) : ExpressionVisi
         }
     }
 
-    override fun visitVariableExpression(expr: Variable) = env[expr.name]
+    override fun visitVariableExpression(expr: Variable) = environment[expr.name]
 
     override fun visitAssignExpression(expr: Assign): Any? {
         val value = evaluate(expr.value)
-        env[expr.name] = value
+        environment.assign(expr.name, value)
 
         return value
     }
@@ -161,11 +170,11 @@ class Interpreter(private val env: Environment = Environment()) : ExpressionVisi
     }
 
     override fun visitVarStatement(statement: Var) {
-        env[statement.name.lexeme] = statement.initializer?.let(::evaluate)
+        environment.define(statement.name.lexeme, statement.initializer?.let(::evaluate))
     }
 
     override fun visitBlockStatement(statement: Block) {
-        TODO("Not yet implemented")
+        executeBlock(statement.statements, Environment(environment))
     }
 
     override fun visitClassStatement(statement: Class) {
@@ -186,6 +195,17 @@ class Interpreter(private val env: Environment = Environment()) : ExpressionVisi
 
     override fun visitWhileStatement(statement: While) {
         TODO("Not yet implemented")
+    }
+
+    private fun executeBlock(statements: List<Statement?>, environment: Environment) {
+        val previousEnvironment = this.environment
+
+        try {
+            this.environment = environment
+            statements.forEach(::execute)
+        } finally {
+            this.environment = previousEnvironment
+        }
     }
 
     private fun execute(statement: Statement?) = statement?.accept(this)
