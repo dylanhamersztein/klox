@@ -112,7 +112,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun ternary(): Expression {
-        var expression = equality()
+        var expression = or()
 
         if (match(QUESTION_MARK)) {
             val left = expression()
@@ -125,13 +125,17 @@ class Parser(private val tokens: List<Token>) {
         return expression
     }
 
-    private fun equality() = parseBinaryOperators(::comparison, BANG_EQUAL, EQUAL_EQUAL)
+    private fun or() = leftAssociativeExpression(::and, ::Logical, OR)
 
-    private fun comparison() = parseBinaryOperators(::term, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)
+    private fun and() = leftAssociativeExpression(::equality, ::Logical, AND)
 
-    private fun term() = parseBinaryOperators(::factor, MINUS, PLUS)
+    private fun equality() = leftAssociativeExpression(::comparison, ::Binary, BANG_EQUAL, EQUAL_EQUAL)
 
-    private fun factor() = parseBinaryOperators(::unary, SLASH, STAR)
+    private fun comparison() = leftAssociativeExpression(::term, ::Binary, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)
+
+    private fun term() = leftAssociativeExpression(::factor, ::Binary, MINUS, PLUS)
+
+    private fun factor() = leftAssociativeExpression(::unary, ::Binary, SLASH, STAR)
 
     private fun unary(): Expression = if (match(BANG, MINUS)) {
         val operator = previous()
@@ -157,13 +161,17 @@ class Parser(private val tokens: List<Token>) {
         else -> throw error(peek(), "Expect expression.")
     }
 
-    private fun parseBinaryOperators(expressionSupplier: () -> Expression, vararg tokenTypes: TokenType): Expression {
+    private fun leftAssociativeExpression(
+        expressionSupplier: () -> Expression,
+        expressionResultSupplier: (left: Expression, operator: Token, right: Expression) -> Expression,
+        vararg tokenTypes: TokenType
+    ): Expression {
         var expression = expressionSupplier()
 
         while (match(*tokenTypes)) {
             val operator = previous()
             val right = expressionSupplier()
-            expression = Binary(expression, operator, right)
+            expression = expressionResultSupplier(expression, operator, right)
         }
 
         return expression
