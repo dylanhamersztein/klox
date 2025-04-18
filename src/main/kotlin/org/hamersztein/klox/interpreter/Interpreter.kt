@@ -169,6 +169,18 @@ class Interpreter(private var environment: Environment = Environment()) : Expres
         println(stringify(value))
     }
 
+    override fun visitIfStatement(statement: If) {
+        val condition = evaluate(statement.condition)
+
+        execute(
+            if (isTruthy(condition)) {
+                statement.thenBranch
+            } else {
+                statement.elseBranch
+            }
+        )
+    }
+
     override fun visitVarStatement(statement: Var) {
         environment.define(statement.name.lexeme, statement.initializer?.let(::evaluate))
     }
@@ -182,10 +194,6 @@ class Interpreter(private var environment: Environment = Environment()) : Expres
     }
 
     override fun visitFunctionStatement(statement: Function) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitIfStatement(statement: If) {
         TODO("Not yet implemented")
     }
 

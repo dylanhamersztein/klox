@@ -5,6 +5,7 @@ import org.hamersztein.klox.ast.expression.Expression
 import org.hamersztein.klox.ast.expression.impl.*
 import org.hamersztein.klox.ast.statement.Statement
 import org.hamersztein.klox.ast.statement.impl.Block
+import org.hamersztein.klox.ast.statement.impl.If
 import org.hamersztein.klox.ast.statement.impl.Print
 import org.hamersztein.klox.ast.statement.impl.Var
 import org.hamersztein.klox.token.Token
@@ -43,9 +44,25 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun statement() = when {
+        match(IF) -> ifStatement()
         match(PRINT) -> printStatement()
         match(LEFT_BRACE) -> Block(block())
         else -> expressionStatement()
+    }
+
+    private fun ifStatement(): Statement {
+        consume(LEFT_PAREN, "Expect '(' after 'if'.")
+        val expression = expression()
+        consume(RIGHT_PAREN, "Expect ')' after if condition.")
+
+        val thenBranch = statement()
+
+        var elseBranch: Statement? = null
+        if (match(ELSE)) {
+            elseBranch = statement()
+        }
+
+        return If(expression, thenBranch, elseBranch)
     }
 
     private fun printStatement(): Statement {
