@@ -3,6 +3,7 @@ package org.hamersztein.klox.parser
 import org.hamersztein.klox.ast.expression.Expression
 import org.hamersztein.klox.ast.expression.impl.*
 import org.hamersztein.klox.ast.statement.impl.Block
+import org.hamersztein.klox.ast.statement.impl.If
 import org.hamersztein.klox.ast.statement.impl.Print
 import org.hamersztein.klox.ast.statement.impl.Var
 import org.hamersztein.klox.token.Token
@@ -480,6 +481,65 @@ class ParserTest {
         assertEquals(1, statements.size)
         assertTrue(statements[0] is Block)
         assertEquals(1, (statements[0] as Block).statements.size)
+    }
+
+    @Test
+    fun `should create an if statement`() {
+        val tokens = listOf(
+            Token(IF, "if", null, 1),
+            Token(LEFT_PAREN, "(", null, 1),
+            Token(TRUE, "true", 1.0, 1),
+            Token(RIGHT_PAREN, ")", null, 1),
+            Token(IDENTIFIER, "muffin", null, 2),
+            Token(EQUAL, "=", null, 2),
+            Token(NUMBER, "1", 1.0, 2),
+            Token(SEMICOLON, ";", null, 2),
+            Token(EOF, "", null, 3),
+        )
+
+        val parser = Parser(tokens)
+        val statements = parser.parse()
+
+        assertEquals(1, statements.size)
+        assertTrue(statements[0] is If)
+
+        with(statements[0] as If) {
+            assertTrue(condition is Literal)
+            assertTrue(thenBranch is ExpressionStatement)
+            assertNull(elseBranch)
+        }
+    }
+
+    @Test
+    fun `should create an if statement with an else block`() {
+        val tokens = listOf(
+            Token(IF, "if", null, 1),
+            Token(LEFT_PAREN, "(", null, 1),
+            Token(TRUE, "true", 1.0, 1),
+            Token(RIGHT_PAREN, ")", null, 1),
+            Token(IDENTIFIER, "muffin", null, 2),
+            Token(EQUAL, "=", null, 2),
+            Token(NUMBER, "1", 1.0, 2),
+            Token(SEMICOLON, ";", null, 2),
+            Token(ELSE, "else", null, 3),
+            Token(IDENTIFIER, "muffin", null, 3),
+            Token(EQUAL, "=", null, 3),
+            Token(NUMBER, "2", 2.0, 3),
+            Token(SEMICOLON, ";", null, 3),
+            Token(EOF, "", null, 3)
+        )
+
+        val parser = Parser(tokens)
+        val statements = parser.parse()
+
+        assertEquals(1, statements.size)
+        assertTrue(statements[0] is If)
+
+        with(statements[0] as If) {
+            assertTrue(condition is Literal)
+            assertTrue(thenBranch is ExpressionStatement)
+            assertTrue(elseBranch is ExpressionStatement)
+        }
     }
 
     private fun assertTokensThatProduceExpressionStatement(

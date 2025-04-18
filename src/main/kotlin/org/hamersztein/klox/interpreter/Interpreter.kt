@@ -132,6 +132,18 @@ class Interpreter(private var environment: Environment = Environment()) : Expres
         return value
     }
 
+    override fun visitTernaryExpression(expr: Ternary): Any? {
+        val condition = evaluate(expr.condition)
+
+        return evaluate(
+            if (isTruthy(condition)) {
+                expr.left
+            } else {
+                expr.right
+            }
+        )
+    }
+
     override fun visitCallExpression(expr: Call): Any? {
         TODO("Not yet implemented")
     }
@@ -156,10 +168,6 @@ class Interpreter(private var environment: Environment = Environment()) : Expres
         TODO("Not yet implemented")
     }
 
-    override fun visitTernaryExpression(expr: Ternary): Any? {
-        TODO("Not yet implemented")
-    }
-
     override fun visitExpressionStatement(statement: ExpressionStatement) {
         evaluate(statement.expression)
     }
@@ -167,6 +175,18 @@ class Interpreter(private var environment: Environment = Environment()) : Expres
     override fun visitPrintStatement(statement: Print) {
         val value = evaluate(statement.expression)
         println(stringify(value))
+    }
+
+    override fun visitIfStatement(statement: If) {
+        val condition = evaluate(statement.condition)
+
+        execute(
+            if (isTruthy(condition)) {
+                statement.thenBranch
+            } else {
+                statement.elseBranch
+            }
+        )
     }
 
     override fun visitVarStatement(statement: Var) {
@@ -182,10 +202,6 @@ class Interpreter(private var environment: Environment = Environment()) : Expres
     }
 
     override fun visitFunctionStatement(statement: Function) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitIfStatement(statement: If) {
         TODO("Not yet implemented")
     }
 

@@ -1,10 +1,7 @@
 package org.hamersztein.klox.interpreter
 
 import org.hamersztein.klox.ast.expression.impl.*
-import org.hamersztein.klox.ast.statement.impl.Block
-import org.hamersztein.klox.ast.statement.impl.Expression
-import org.hamersztein.klox.ast.statement.impl.Print
-import org.hamersztein.klox.ast.statement.impl.Var
+import org.hamersztein.klox.ast.statement.impl.*
 import org.hamersztein.klox.environment.Environment
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType
@@ -17,6 +14,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
 import kotlin.contracts.ExperimentalContracts
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -490,6 +488,94 @@ class InterpreterTest {
         assertEquals("$globalValue$blockScopeValue", outputStreamCaptor.toString().trim())
 
         resetOutStream()
+    }
+
+    @ValueSource(booleans = [true, false])
+    @ParameterizedTest(name = "should execute correct branch of if statement when condition is literal '{0}'")
+    fun `should execute correct branch of if statement based on literal condition`(conditionValue: Boolean) {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val statements = listOf(
+            If(
+                Literal(conditionValue),
+                Print(Literal("yay")),
+                Print(Literal("boo")),
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals(if (conditionValue) "yay" else "boo", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @Test
+    fun `should execute correct branch of if statement based on expression condition`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val statements = listOf(
+            If(
+                Binary(Literal(true), Token(EQUAL_EQUAL, "==", null, 1), Literal(false)),
+                Print(Literal("yay")),
+                Print(Literal("boo")),
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals("boo", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @ValueSource(booleans = [true, false])
+    @ParameterizedTest(name = "should execute correct branch of ternary expression when condition is literal '{0}'")
+    fun `should execute correct branch of ternary expression based on literal condition`(conditionValue: Boolean) {
+        val environment = Environment()
+
+        val variableNameToken = Token(IDENTIFIER, "breakfast", null, 1)
+
+        val statements = listOf(
+            Var(
+                variableNameToken,
+                Ternary(
+                    Literal(conditionValue),
+                    Literal("toast"),
+                    Literal("muffin")
+                )
+            )
+        )
+
+        val interpreter = Interpreter(environment)
+        interpreter.interpret(statements)
+
+        assertEquals(if (conditionValue) "toast" else "muffin", environment.get(variableNameToken))
+    }
+
+    @Test
+    fun `should execute correct branch of ternary expression based on expression condition`() {
+        val environment = Environment()
+
+        val variableNameToken = Token(IDENTIFIER, "breakfast", null, 1)
+
+        val statements = listOf(
+            Var(
+                variableNameToken,
+                Ternary(
+                    Binary(Literal(true), Token(EQUAL_EQUAL, "==", null, 1), Literal(false)),
+                    Literal("toast"),
+                    Literal("muffin")
+                )
+            )
+        )
+
+        val interpreter = Interpreter(environment)
+        interpreter.interpret(statements)
+
+        assertEquals("muffin", environment.get(variableNameToken))
     }
 
     companion object {
