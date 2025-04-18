@@ -28,6 +28,14 @@ class Interpreter(private var environment: Environment = Environment()) : Expres
         }
     }
 
+    fun interpret(statement: Statement?) {
+        try {
+            execute(statement)
+        } catch (e: RuntimeError) {
+            Lox.runtimeError(e)
+        }
+    }
+
     override fun visitLiteralExpression(expr: Literal) = expr.value
 
     override fun visitGroupingExpression(expr: Grouping) = evaluate(expr.expression)

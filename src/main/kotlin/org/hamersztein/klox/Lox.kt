@@ -1,5 +1,6 @@
 package org.hamersztein.klox
 
+import org.hamersztein.klox.ast.statement.impl.Expression
 import org.hamersztein.klox.interpreter.Interpreter
 import org.hamersztein.klox.interpreter.RuntimeError
 import org.hamersztein.klox.parser.Parser
@@ -59,7 +60,13 @@ class Lox {
                 return
             }
 
-            interpreter.interpret(statements)
+            statements.forEach {
+                if (it is Expression) {
+                    it.expression.accept(interpreter).also(::println)
+                } else {
+                    interpreter.interpret(it)
+                }
+            }
         }
 
         fun error(line: Int, message: String) {
