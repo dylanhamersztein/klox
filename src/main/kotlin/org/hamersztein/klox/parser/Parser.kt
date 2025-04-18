@@ -112,7 +112,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun ternary(): Expression {
-        var expression = equality()
+        var expression = or()
 
         if (match(QUESTION_MARK)) {
             val left = expression()
@@ -125,13 +125,19 @@ class Parser(private val tokens: List<Token>) {
         return expression
     }
 
-    private fun equality() = parseBinaryOperators(::comparison, BANG_EQUAL, EQUAL_EQUAL)
+    private fun or() = leftAssociativeExpression(::and, OR, expressionResultCreator = ::Logical)
 
-    private fun comparison() = parseBinaryOperators(::term, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)
+    private fun and() = leftAssociativeExpression(::equality, AND, expressionResultCreator = ::Logical)
 
-    private fun term() = parseBinaryOperators(::factor, MINUS, PLUS)
+    private fun equality() =
+        leftAssociativeExpression(::comparison, BANG_EQUAL, EQUAL_EQUAL, expressionResultCreator = ::Binary)
 
-    private fun factor() = parseBinaryOperators(::unary, SLASH, STAR)
+    private fun comparison() =
+        leftAssociativeExpression(::term, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL, expressionResultCreator = ::Binary)
+
+    private fun term() = leftAssociativeExpression(::factor, MINUS, PLUS, expressionResultCreator = ::Binary)
+
+    private fun factor() = leftAssociativeExpression(::unary, SLASH, STAR, expressionResultCreator = ::Binary)
 
     private fun unary(): Expression = if (match(BANG, MINUS)) {
         val operator = previous()
@@ -157,13 +163,17 @@ class Parser(private val tokens: List<Token>) {
         else -> throw error(peek(), "Expect expression.")
     }
 
-    private fun parseBinaryOperators(expressionSupplier: () -> Expression, vararg tokenTypes: TokenType): Expression {
+    private fun leftAssociativeExpression(
+        expressionSupplier: () -> Expression,
+        vararg tokenTypes: TokenType,
+        expressionResultCreator: (left: Expression, operator: Token, right: Expression) -> Expression
+    ): Expression {
         var expression = expressionSupplier()
 
         while (match(*tokenTypes)) {
             val operator = previous()
             val right = expressionSupplier()
-            expression = Binary(expression, operator, right)
+            expression = expressionResultCreator(expression, operator, right)
         }
 
         return expression
