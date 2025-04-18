@@ -531,6 +531,53 @@ class InterpreterTest {
         resetOutStream()
     }
 
+    @ValueSource(booleans = [true, false])
+    @ParameterizedTest(name = "should execute correct branch of ternary expression when condition is literal '{0}'")
+    fun `should execute correct branch of ternary expression based on literal condition`(conditionValue: Boolean) {
+        val environment = Environment()
+
+        val variableNameToken = Token(IDENTIFIER, "breakfast", null, 1)
+
+        val statements = listOf(
+            Var(
+                variableNameToken,
+                Ternary(
+                    Literal(conditionValue),
+                    Literal("toast"),
+                    Literal("muffin")
+                )
+            )
+        )
+
+        val interpreter = Interpreter(environment)
+        interpreter.interpret(statements)
+
+        assertEquals(if (conditionValue) "toast" else "muffin", environment.get(variableNameToken))
+    }
+
+    @Test
+    fun `should execute correct branch of ternary expression based on expression condition`() {
+        val environment = Environment()
+
+        val variableNameToken = Token(IDENTIFIER, "breakfast", null, 1)
+
+        val statements = listOf(
+            Var(
+                variableNameToken,
+                Ternary(
+                    Binary(Literal(true), Token(EQUAL_EQUAL, "==", null, 1), Literal(false)),
+                    Literal("toast"),
+                    Literal("muffin")
+                )
+            )
+        )
+
+        val interpreter = Interpreter(environment)
+        interpreter.interpret(statements)
+
+        assertEquals("muffin", environment.get(variableNameToken))
+    }
+
     companion object {
         @JvmStatic
         private fun provideArgumentsForLiteralTest() = listOf(
