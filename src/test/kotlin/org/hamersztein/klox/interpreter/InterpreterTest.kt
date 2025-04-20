@@ -671,6 +671,39 @@ class InterpreterTest {
         assertEquals("muffin", environment.get(variableNameToken))
     }
 
+    @Test
+    fun `should interpret while statement`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val conditionToken = Token(IDENTIFIER, "condition", null, 1)
+        val variableToken = Token(IDENTIFIER, "number", null, 1)
+
+        val statements = listOf(
+            Var(conditionToken, Literal(true)),
+            Var(variableToken, Literal(1)),
+            While(
+                Logical(
+                    Variable(conditionToken),
+                    Token(EQUAL_EQUAL, "==", null, 1),
+                    Literal(true)
+                ),
+                Block(
+                    listOf(
+                        Print(Variable(variableToken)),
+                        Expression(Assign(conditionToken, Literal(false)))
+                    )
+                )
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals("1", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
     companion object {
         @JvmStatic
         private fun provideArgumentsForLiteralTest() = listOf(

@@ -202,6 +202,12 @@ class Interpreter(private var environment: Environment = Environment()) : Expres
         executeBlock(statement.statements, Environment(environment))
     }
 
+    override fun visitWhileStatement(statement: While) {
+        while (isTruthy(evaluate(statement.condition))) {
+            execute(statement.body)
+        }
+    }
+
     override fun visitClassStatement(statement: Class) {
         TODO("Not yet implemented")
     }
@@ -211,10 +217,6 @@ class Interpreter(private var environment: Environment = Environment()) : Expres
     }
 
     override fun visitReturnStatement(statement: Return) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitWhileStatement(statement: While) {
         TODO("Not yet implemented")
     }
 
