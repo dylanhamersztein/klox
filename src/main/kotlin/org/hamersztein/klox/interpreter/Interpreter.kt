@@ -148,8 +148,7 @@ class Interpreter(private var environment: Environment = Environment()) : Expres
         val left = evaluate(expr.left)
 
         return when {
-            expr.operator.type == OR && isTruthy(left) -> left
-            !isTruthy(left) -> left
+            (expr.operator.type == OR && isTruthy(left)) || !isTruthy(left) -> left
             else -> evaluate(expr.right)
         }
     }
