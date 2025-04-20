@@ -579,6 +579,51 @@ class InterpreterTest {
         resetOutStream()
     }
 
+    @MethodSource("provideArgumentsForShortCircuitOrExpressionTest")
+    @ParameterizedTest(name = "should short-circuit OR operation when left is truthy - {0}")
+    fun `should circuit OR expression when left is truthy`(value: Any) {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val statements = listOf(
+            Print(
+                Logical(
+                    Literal(value),
+                    Token(OR, "or", null, 1),
+                    Literal(false)
+                )
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals(value.toString(), outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @Test
+    fun `should evaluate right hand OR expression when left is falsy`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val statements = listOf(
+            Print(
+                Logical(
+                    Literal(null),
+                    Token(OR, "or", null, 1),
+                    Literal(false)
+                )
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals("nil", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
     @ValueSource(booleans = [true, false])
     @ParameterizedTest(name = "should execute correct branch of ternary expression when condition is literal '{0}'")
     fun `should execute correct branch of ternary expression based on literal condition`(conditionValue: Boolean) {
@@ -683,6 +728,13 @@ class InterpreterTest {
             Arguments.of(PLUS, false, true, "Could not add false to true."),
             Arguments.of(PLUS, 1.0, true, "Could not add 1 to true."),
             Arguments.of(PLUS, 1.1, true, "Could not add 1.1 to true.")
+        )
+
+        @JvmStatic
+        private fun provideArgumentsForShortCircuitOrExpressionTest() = listOf(
+            Arguments.of("hi"),
+            Arguments.of(true),
+            Arguments.of(2),
         )
     }
 
