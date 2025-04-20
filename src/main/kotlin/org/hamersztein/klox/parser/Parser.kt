@@ -4,10 +4,7 @@ import org.hamersztein.klox.Lox
 import org.hamersztein.klox.ast.expression.Expression
 import org.hamersztein.klox.ast.expression.impl.*
 import org.hamersztein.klox.ast.statement.Statement
-import org.hamersztein.klox.ast.statement.impl.Block
-import org.hamersztein.klox.ast.statement.impl.If
-import org.hamersztein.klox.ast.statement.impl.Print
-import org.hamersztein.klox.ast.statement.impl.Var
+import org.hamersztein.klox.ast.statement.impl.*
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType
 import org.hamersztein.klox.token.TokenType.*
@@ -46,8 +43,19 @@ class Parser(private val tokens: List<Token>) {
     private fun statement() = when {
         match(IF) -> ifStatement()
         match(PRINT) -> printStatement()
+        match(WHILE) -> whileStatement()
         match(LEFT_BRACE) -> Block(block())
         else -> expressionStatement()
+    }
+
+    private fun whileStatement(): Statement {
+        consume(LEFT_PAREN, "Expect '(' after 'while'.")
+        val expression = expression()
+        consume(RIGHT_PAREN, "Expect ')' after while condition.")
+
+        val body = statement()
+
+        return While(expression, body)
     }
 
     private fun ifStatement(): Statement {

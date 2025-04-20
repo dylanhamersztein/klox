@@ -2,10 +2,7 @@ package org.hamersztein.klox.parser
 
 import org.hamersztein.klox.ast.expression.Expression
 import org.hamersztein.klox.ast.expression.impl.*
-import org.hamersztein.klox.ast.statement.impl.Block
-import org.hamersztein.klox.ast.statement.impl.If
-import org.hamersztein.klox.ast.statement.impl.Print
-import org.hamersztein.klox.ast.statement.impl.Var
+import org.hamersztein.klox.ast.statement.impl.*
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType.*
 import org.hamersztein.klox.util.TestUtils.mockSystemErrorStream
@@ -540,6 +537,75 @@ class ParserTest {
             assertTrue(thenBranch is ExpressionStatement)
             assertTrue(elseBranch is ExpressionStatement)
         }
+    }
+
+    @Test
+    fun `should create while statement`() {
+        val tokens = listOf(
+            Token(WHILE, "while", null, 1),
+            Token(LEFT_PAREN, "(", null, 1),
+            Token(TRUE, "true", true, 1),
+            Token(RIGHT_PAREN, ")", null, 1),
+            Token(PRINT, "print", null, 1),
+            Token(STRING, "\"hello\"", "hello", 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(EOF, "", null, 1),
+        )
+
+        val parser = Parser(tokens)
+        val statements = parser.parse()
+
+        assertEquals(1, statements.size)
+        assertTrue(statements[0] is While)
+
+        with(statements[0] as While) {
+            assertTrue(condition is Literal)
+            assertTrue(body is Print)
+        }
+    }
+
+    @Test
+    fun `should error when while statement condition does not have left parenthesis`() {
+        val (errorStreamCaptor, resetSystemError) = mockSystemErrorStream()
+
+        val tokens = listOf(
+            Token(WHILE, "while", null, 1),
+            Token(TRUE, "true", true, 1),
+            Token(RIGHT_PAREN, ")", null, 1),
+            Token(PRINT, "print", null, 1),
+            Token(STRING, "\"hello\"", "hello", 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(EOF, "", null, 1),
+        )
+
+        val parser = Parser(tokens)
+        parser.parse()
+
+        assertEquals("[1]: Error  at 'true': Expect '(' after 'while'.", errorStreamCaptor.toString().trim())
+
+        resetSystemError()
+    }
+
+    @Test
+    fun `should error when while statement condition does not have right parenthesis`() {
+        val (errorStreamCaptor, resetSystemError) = mockSystemErrorStream()
+
+        val tokens = listOf(
+            Token(WHILE, "while", null, 1),
+            Token(LEFT_PAREN, "(", null, 1),
+            Token(TRUE, "true", true, 1),
+            Token(PRINT, "print", null, 1),
+            Token(STRING, "\"hello\"", "hello", 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(EOF, "", null, 1),
+        )
+
+        val parser = Parser(tokens)
+        parser.parse()
+
+        assertEquals("[1]: Error  at 'print': Expect ')' after while condition.", errorStreamCaptor.toString().trim())
+
+        resetSystemError()
     }
 
     private fun assertTokensThatProduceExpressionStatement(
