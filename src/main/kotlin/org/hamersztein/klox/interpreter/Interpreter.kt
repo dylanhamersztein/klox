@@ -144,15 +144,21 @@ class Interpreter(private var environment: Environment = Environment()) : Expres
         )
     }
 
+    override fun visitLogicalExpression(expr: Logical): Any? {
+        val left = evaluate(expr.left)
+
+        return when {
+            expr.operator.type == OR && isTruthy(left) -> left
+            !isTruthy(left) -> left
+            else -> evaluate(expr.right)
+        }
+    }
+
     override fun visitCallExpression(expr: Call): Any? {
         TODO("Not yet implemented")
     }
 
     override fun visitGetExpression(expr: Get): Any? {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitLogicalExpression(expr: Logical): Any? {
         TODO("Not yet implemented")
     }
 

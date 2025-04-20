@@ -531,6 +531,54 @@ class InterpreterTest {
         resetOutStream()
     }
 
+    @Test
+    fun `should visit logical expression when operator is AND`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val statements = listOf(
+            If(
+                Logical(
+                    Literal(true),
+                    Token(AND, "and", null, 1),
+                    Literal(false)
+                ),
+                Print(Literal("true")),
+                Print(Literal("false"))
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals("false", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @Test
+    fun `should visit logical expression when operator is OR`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val statements = listOf(
+            If(
+                Logical(
+                    Literal(true),
+                    Token(OR, "and", null, 1),
+                    Literal(false)
+                ),
+                Print(Literal("true")),
+                Print(Literal("false"))
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals("true", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
     @ValueSource(booleans = [true, false])
     @ParameterizedTest(name = "should execute correct branch of ternary expression when condition is literal '{0}'")
     fun `should execute correct branch of ternary expression based on literal condition`(conditionValue: Boolean) {
