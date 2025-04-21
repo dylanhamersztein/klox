@@ -608,6 +608,255 @@ class ParserTest {
         resetSystemError()
     }
 
+    @Test
+    fun `should create a for loop`() {
+        val tokens = listOf(
+            Token(FOR, "for", null, 1),
+            Token(LEFT_PAREN, "(", null, 1),
+            Token(VAR, "var", null, 1),
+            Token(IDENTIFIER, "i", null, 1),
+            Token(EQUAL, "=", null, 1),
+            Token(NUMBER, "0", 0, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(IDENTIFIER, "i", null, 1),
+            Token(LESS, "<", null, 1),
+            Token(NUMBER, "1000", 1000, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(IDENTIFIER, "i", null, 1),
+            Token(EQUAL, "=", null, 1),
+            Token(IDENTIFIER, "i", null, 1),
+            Token(PLUS, "+", null, 1),
+            Token(NUMBER, "1", 1, 1),
+            Token(RIGHT_PAREN, ")", null, 1),
+            Token(LEFT_BRACE, "{", null, 1),
+            Token(PRINT, "print", null, 2),
+            Token(IDENTIFIER, "i", null, 2),
+            Token(SEMICOLON, ";", null, 2),
+            Token(RIGHT_BRACE, "}", null, 3),
+            Token(EOF, "", null, 4)
+        )
+
+        val parser = Parser(tokens)
+        val statements = parser.parse()
+
+        assertEquals(1, statements.size)
+        assertTrue(statements[0] is Block)
+        with(statements[0] as Block) {
+            assertEquals(2, this.statements.size)
+
+            assertTrue(this.statements[0] is Var)
+            with(this.statements[0] as Var) {
+                assertEquals(Token(IDENTIFIER, "i", null, 1), this.name)
+                assertNotNull(this.initializer)
+                assertEquals(Literal(0), this.initializer)
+            }
+
+            assertTrue(this.statements[1] is While)
+            with(this.statements[1] as While) {
+                assertTrue(this.condition is Binary)
+                with(this.condition as Binary) {
+                    assertEquals(Variable(Token(IDENTIFIER, "i", null, 1)), this.left)
+                    assertEquals(Token(LESS, "<", null, 1), this.operator)
+                    assertEquals(Variable(Token(IDENTIFIER, "i", null, 1)), this.left)
+                    assertEquals(Literal(1000), this.right)
+                }
+
+                assertTrue(this.body is Block)
+                with(this.body as Block) {
+                    assertEquals(2, this.statements.size)
+
+                    assertTrue(this.statements[0] is Block)
+                    with(this.statements[0] as Block) {
+                        assertEquals(1, this.statements.size)
+                        assertTrue(this.statements[0] is Print)
+                    }
+
+                    assertTrue(this.statements[1] is ExpressionStatement)
+                    with(this.statements[1] as ExpressionStatement) {
+                        assertTrue(this.expression is Assign)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `should create a for loop with without an initializer`() {
+        val tokens = listOf(
+            Token(FOR, "for", null, 1),
+            Token(LEFT_PAREN, "(", null, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(IDENTIFIER, "i", null, 1),
+            Token(LESS, "<", null, 1),
+            Token(NUMBER, "1000", 1000, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(IDENTIFIER, "i", null, 1),
+            Token(EQUAL, "=", null, 1),
+            Token(IDENTIFIER, "i", null, 1),
+            Token(PLUS, "+", null, 1),
+            Token(NUMBER, "1", 1, 1),
+            Token(RIGHT_PAREN, ")", null, 1),
+            Token(LEFT_BRACE, "{", null, 1),
+            Token(PRINT, "print", null, 2),
+            Token(IDENTIFIER, "i", null, 2),
+            Token(SEMICOLON, ";", null, 2),
+            Token(RIGHT_BRACE, "}", null, 3),
+            Token(EOF, "", null, 4)
+        )
+
+        val parser = Parser(tokens)
+        val statements = parser.parse()
+
+        assertEquals(1, statements.size)
+        assertTrue(statements[0] is While)
+
+        with(statements[0] as While) {
+            assertTrue(this.condition is Binary)
+            with(this.condition as Binary) {
+                assertEquals(Variable(Token(IDENTIFIER, "i", null, 1)), this.left)
+                assertEquals(Token(LESS, "<", null, 1), this.operator)
+                assertEquals(Variable(Token(IDENTIFIER, "i", null, 1)), this.left)
+                assertEquals(Literal(1000), this.right)
+            }
+
+            assertTrue(this.body is Block)
+            with(this.body as Block) {
+                assertEquals(2, this.statements.size)
+
+                assertTrue(this.statements[0] is Block)
+                with(this.statements[0] as Block) {
+                    assertEquals(1, this.statements.size)
+                    assertTrue(this.statements[0] is Print)
+                }
+
+                assertTrue(this.statements[1] is ExpressionStatement)
+                with(this.statements[1] as ExpressionStatement) {
+                    assertTrue(this.expression is Assign)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `should create a for loop with the condition is true if one is not supplied`() {
+        val tokens = listOf(
+            Token(FOR, "for", null, 1),
+            Token(LEFT_PAREN, "(", null, 1),
+            Token(VAR, "var", null, 1),
+            Token(IDENTIFIER, "i", null, 1),
+            Token(EQUAL, "=", null, 1),
+            Token(NUMBER, "0", 0, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(IDENTIFIER, "i", null, 1),
+            Token(EQUAL, "=", null, 1),
+            Token(IDENTIFIER, "i", null, 1),
+            Token(PLUS, "+", null, 1),
+            Token(NUMBER, "1", 1, 1),
+            Token(RIGHT_PAREN, ")", null, 1),
+            Token(LEFT_BRACE, "{", null, 1),
+            Token(PRINT, "print", null, 2),
+            Token(IDENTIFIER, "i", null, 2),
+            Token(SEMICOLON, ";", null, 2),
+            Token(RIGHT_BRACE, "}", null, 3),
+            Token(EOF, "", null, 4)
+        )
+
+        val parser = Parser(tokens)
+        val statements = parser.parse()
+
+        assertEquals(1, statements.size)
+        assertTrue(statements[0] is Block)
+        with(statements[0] as Block) {
+            assertEquals(2, this.statements.size)
+
+            assertTrue(this.statements[0] is Var)
+            with(this.statements[0] as Var) {
+                assertEquals(Token(IDENTIFIER, "i", null, 1), this.name)
+                assertNotNull(this.initializer)
+                assertEquals(Literal(0), this.initializer)
+            }
+
+            assertTrue(this.statements[1] is While)
+            with(this.statements[1] as While) {
+                assertEquals(Literal(true), this.condition)
+
+                assertTrue(this.body is Block)
+                with(this.body as Block) {
+                    assertEquals(2, this.statements.size)
+
+                    assertTrue(this.statements[0] is Block)
+                    with(this.statements[0] as Block) {
+                        assertEquals(1, this.statements.size)
+                        assertTrue(this.statements[0] is Print)
+                    }
+
+                    assertTrue(this.statements[1] is ExpressionStatement)
+                    with(this.statements[1] as ExpressionStatement) {
+                        assertTrue(this.expression is Assign)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `should create a for loop without an increment`() {
+        val tokens = listOf(
+            Token(FOR, "for", null, 1),
+            Token(LEFT_PAREN, "(", null, 1),
+            Token(VAR, "var", null, 1),
+            Token(IDENTIFIER, "i", null, 1),
+            Token(EQUAL, "=", null, 1),
+            Token(NUMBER, "0", 0, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(IDENTIFIER, "i", null, 1),
+            Token(LESS, "<", null, 1),
+            Token(NUMBER, "1000", 1000, 1),
+            Token(SEMICOLON, ";", null, 1),
+            Token(RIGHT_PAREN, ")", null, 1),
+            Token(LEFT_BRACE, "{", null, 1),
+            Token(PRINT, "print", null, 2),
+            Token(IDENTIFIER, "i", null, 2),
+            Token(SEMICOLON, ";", null, 2),
+            Token(RIGHT_BRACE, "}", null, 3),
+            Token(EOF, "", null, 4)
+        )
+
+        val parser = Parser(tokens)
+        val statements = parser.parse()
+
+        assertEquals(1, statements.size)
+        assertTrue(statements[0] is Block)
+        with(statements[0] as Block) {
+            assertEquals(2, this.statements.size)
+
+            assertTrue(this.statements[0] is Var)
+            with(this.statements[0] as Var) {
+                assertEquals(Token(IDENTIFIER, "i", null, 1), this.name)
+                assertNotNull(this.initializer)
+                assertEquals(Literal(0), this.initializer)
+            }
+
+            assertTrue(this.statements[1] is While)
+            with(this.statements[1] as While) {
+                assertTrue(this.condition is Binary)
+                with(this.condition as Binary) {
+                    assertEquals(Variable(Token(IDENTIFIER, "i", null, 1)), this.left)
+                    assertEquals(Token(LESS, "<", null, 1), this.operator)
+                    assertEquals(Variable(Token(IDENTIFIER, "i", null, 1)), this.left)
+                    assertEquals(Literal(1000), this.right)
+                }
+
+                assertTrue(this.body is Block)
+                with(this.body as Block) {
+                    assertEquals(1, this.statements.size)
+                    assertTrue(this.statements[0] is Print)
+                }
+            }
+        }
+    }
+
     private fun assertTokensThatProduceExpressionStatement(
         tokens: List<Token>,
         assertFunction: (e: Expression) -> Unit
