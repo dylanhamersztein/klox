@@ -1,10 +1,7 @@
 package org.hamersztein.klox.interpreter
 
 import org.hamersztein.klox.ast.expression.impl.*
-import org.hamersztein.klox.ast.statement.impl.Block
-import org.hamersztein.klox.ast.statement.impl.Expression
-import org.hamersztein.klox.ast.statement.impl.Print
-import org.hamersztein.klox.ast.statement.impl.Var
+import org.hamersztein.klox.ast.statement.impl.*
 import org.hamersztein.klox.environment.Environment
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType
@@ -17,6 +14,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
 import kotlin.contracts.ExperimentalContracts
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -492,6 +490,220 @@ class InterpreterTest {
         resetOutStream()
     }
 
+    @ValueSource(booleans = [true, false])
+    @ParameterizedTest(name = "should execute correct branch of if statement when condition is literal '{0}'")
+    fun `should execute correct branch of if statement based on literal condition`(conditionValue: Boolean) {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val statements = listOf(
+            If(
+                Literal(conditionValue),
+                Print(Literal("yay")),
+                Print(Literal("boo")),
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals(if (conditionValue) "yay" else "boo", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @Test
+    fun `should execute correct branch of if statement based on expression condition`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val statements = listOf(
+            If(
+                Binary(Literal(true), Token(EQUAL_EQUAL, "==", null, 1), Literal(false)),
+                Print(Literal("yay")),
+                Print(Literal("boo")),
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals("boo", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @Test
+    fun `should visit logical expression when operator is AND`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val statements = listOf(
+            If(
+                Logical(
+                    Literal(true),
+                    Token(AND, "and", null, 1),
+                    Literal(false)
+                ),
+                Print(Literal("true")),
+                Print(Literal("false"))
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals("false", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @Test
+    fun `should visit logical expression when operator is OR`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val statements = listOf(
+            If(
+                Logical(
+                    Literal(true),
+                    Token(OR, "and", null, 1),
+                    Literal(false)
+                ),
+                Print(Literal("true")),
+                Print(Literal("false"))
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals("true", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @MethodSource("provideArgumentsForShortCircuitOrExpressionTest")
+    @ParameterizedTest(name = "should short-circuit OR operation when left is truthy - {0}")
+    fun `should circuit OR expression when left is truthy`(value: Any) {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val statements = listOf(
+            Print(
+                Logical(
+                    Literal(value),
+                    Token(OR, "or", null, 1),
+                    Literal(false)
+                )
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals(value.toString(), outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @Test
+    fun `should evaluate right hand OR expression when left is falsy`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val statements = listOf(
+            Print(
+                Logical(
+                    Literal(null),
+                    Token(OR, "or", null, 1),
+                    Literal(false)
+                )
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals("nil", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
+    @ValueSource(booleans = [true, false])
+    @ParameterizedTest(name = "should execute correct branch of ternary expression when condition is literal '{0}'")
+    fun `should execute correct branch of ternary expression based on literal condition`(conditionValue: Boolean) {
+        val environment = Environment()
+
+        val variableNameToken = Token(IDENTIFIER, "breakfast", null, 1)
+
+        val statements = listOf(
+            Var(
+                variableNameToken,
+                Ternary(
+                    Literal(conditionValue),
+                    Literal("toast"),
+                    Literal("muffin")
+                )
+            )
+        )
+
+        val interpreter = Interpreter(environment)
+        interpreter.interpret(statements)
+
+        assertEquals(if (conditionValue) "toast" else "muffin", environment.get(variableNameToken))
+    }
+
+    @Test
+    fun `should execute correct branch of ternary expression based on expression condition`() {
+        val environment = Environment()
+
+        val variableNameToken = Token(IDENTIFIER, "breakfast", null, 1)
+
+        val statements = listOf(
+            Var(
+                variableNameToken,
+                Ternary(
+                    Binary(Literal(true), Token(EQUAL_EQUAL, "==", null, 1), Literal(false)),
+                    Literal("toast"),
+                    Literal("muffin")
+                )
+            )
+        )
+
+        val interpreter = Interpreter(environment)
+        interpreter.interpret(statements)
+
+        assertEquals("muffin", environment.get(variableNameToken))
+    }
+
+    @Test
+    fun `should interpret while statement`() {
+        val (outputStreamCaptor, resetOutStream) = mockSystemOutStream()
+
+        val conditionToken = Token(IDENTIFIER, "condition", null, 1)
+        val variableToken = Token(IDENTIFIER, "number", null, 1)
+
+        val statements = listOf(
+            Var(conditionToken, Literal(true)),
+            Var(variableToken, Literal(1)),
+            While(
+                Logical(
+                    Variable(conditionToken),
+                    Token(EQUAL_EQUAL, "==", null, 1),
+                    Literal(true)
+                ),
+                Block(
+                    listOf(
+                        Print(Variable(variableToken)),
+                        Expression(Assign(conditionToken, Literal(false)))
+                    )
+                )
+            )
+        )
+
+        val interpreter = Interpreter()
+        interpreter.interpret(statements)
+
+        assertEquals("1", outputStreamCaptor.toString().trim())
+
+        resetOutStream()
+    }
+
     companion object {
         @JvmStatic
         private fun provideArgumentsForLiteralTest() = listOf(
@@ -549,6 +761,13 @@ class InterpreterTest {
             Arguments.of(PLUS, false, true, "Could not add false to true."),
             Arguments.of(PLUS, 1.0, true, "Could not add 1 to true."),
             Arguments.of(PLUS, 1.1, true, "Could not add 1.1 to true.")
+        )
+
+        @JvmStatic
+        private fun provideArgumentsForShortCircuitOrExpressionTest() = listOf(
+            Arguments.of("hi"),
+            Arguments.of(true),
+            Arguments.of(2),
         )
     }
 

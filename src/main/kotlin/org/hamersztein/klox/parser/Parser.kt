@@ -4,9 +4,7 @@ import org.hamersztein.klox.Lox
 import org.hamersztein.klox.ast.expression.Expression
 import org.hamersztein.klox.ast.expression.impl.*
 import org.hamersztein.klox.ast.statement.Statement
-import org.hamersztein.klox.ast.statement.impl.Block
-import org.hamersztein.klox.ast.statement.impl.Print
-import org.hamersztein.klox.ast.statement.impl.Var
+import org.hamersztein.klox.ast.statement.impl.*
 import org.hamersztein.klox.token.Token
 import org.hamersztein.klox.token.TokenType
 import org.hamersztein.klox.token.TokenType.*
@@ -43,9 +41,72 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun statement() = when {
+        match(FOR) -> forStatement()
+        match(IF) -> ifStatement()
         match(PRINT) -> printStatement()
+        match(WHILE) -> whileStatement()
         match(LEFT_BRACE) -> Block(block())
         else -> expressionStatement()
+    }
+
+    private fun forStatement(): Statement {
+        consume(LEFT_PAREN, "Expect '(' after 'for'.")
+
+        val initializer = when {
+            match(SEMICOLON) -> null
+            match(VAR) -> variableDeclaration()
+            else -> expressionStatement()
+        }
+
+        val condition = if (!check(SEMICOLON)) expression() else Literal(true)
+        consume(SEMICOLON, "Expect ';' after loop condition.")
+
+        val increment = if (!check(RIGHT_PAREN)) expression() else null
+        consume(RIGHT_PAREN, "Expect ')' after for clauses.")
+
+        var body = statement()
+
+        if (increment !== null) {
+            body = Block(
+                listOf(
+                    body,
+                    ExpressionStatement(increment)
+                )
+            )
+        }
+
+        body = While(condition, body)
+
+        if (initializer !== null) {
+            body = Block(listOf(initializer, body))
+        }
+
+        return body
+    }
+
+    private fun whileStatement(): Statement {
+        consume(LEFT_PAREN, "Expect '(' after 'while'.")
+        val expression = expression()
+        consume(RIGHT_PAREN, "Expect ')' after while condition.")
+
+        val body = statement()
+
+        return While(expression, body)
+    }
+
+    private fun ifStatement(): Statement {
+        consume(LEFT_PAREN, "Expect '(' after 'if'.")
+        val expression = expression()
+        consume(RIGHT_PAREN, "Expect ')' after if condition.")
+
+        val thenBranch = statement()
+
+        var elseBranch: Statement? = null
+        if (match(ELSE)) {
+            elseBranch = statement()
+        }
+
+        return If(expression, thenBranch, elseBranch)
     }
 
     private fun printStatement(): Statement {
@@ -95,7 +156,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun ternary(): Expression {
-        var expression = equality()
+        var expression = or()
 
         if (match(QUESTION_MARK)) {
             val left = expression()
@@ -108,13 +169,17 @@ class Parser(private val tokens: List<Token>) {
         return expression
     }
 
-    private fun equality() = parseBinaryOperators(::comparison, BANG_EQUAL, EQUAL_EQUAL)
+    private fun or() = leftAssociativeExpression(::and, ::Logical, OR)
 
-    private fun comparison() = parseBinaryOperators(::term, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)
+    private fun and() = leftAssociativeExpression(::equality, ::Logical, AND)
 
-    private fun term() = parseBinaryOperators(::factor, MINUS, PLUS)
+    private fun equality() = leftAssociativeExpression(::comparison, ::Binary, BANG_EQUAL, EQUAL_EQUAL)
 
-    private fun factor() = parseBinaryOperators(::unary, SLASH, STAR)
+    private fun comparison() = leftAssociativeExpression(::term, ::Binary, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)
+
+    private fun term() = leftAssociativeExpression(::factor, ::Binary, MINUS, PLUS)
+
+    private fun factor() = leftAssociativeExpression(::unary, ::Binary, SLASH, STAR)
 
     private fun unary(): Expression = if (match(BANG, MINUS)) {
         val operator = previous()
@@ -140,13 +205,17 @@ class Parser(private val tokens: List<Token>) {
         else -> throw error(peek(), "Expect expression.")
     }
 
-    private fun parseBinaryOperators(expressionSupplier: () -> Expression, vararg tokenTypes: TokenType): Expression {
+    private fun leftAssociativeExpression(
+        expressionSupplier: () -> Expression,
+        expressionResultSupplier: (left: Expression, operator: Token, right: Expression) -> Expression,
+        vararg tokenTypes: TokenType
+    ): Expression {
         var expression = expressionSupplier()
 
         while (match(*tokenTypes)) {
             val operator = previous()
             val right = expressionSupplier()
-            expression = Binary(expression, operator, right)
+            expression = expressionResultSupplier(expression, operator, right)
         }
 
         return expression
